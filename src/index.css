@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+@theme {
+  --color-brand-50:  #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+
+  --color-surface-50:  #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  --font-sans: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --animate-fade-in:   fadeIn  0.2s ease-in-out;
+  --animate-slide-up:  slideUp 0.3s ease-out;
+  --animate-pulse-dot: pulseDot 2s infinite;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+
+  @keyframes pulseDot {
+    0%, 100% { transform: scale(1);   }
+    50%       { transform: scale(1.4); }
+  }
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* allow body scroll on mobile when modals are open */
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-surface-950);
+  color: #f1f5f9;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Only lock overflow on larger screens where the app fills the viewport */
+  overflow: hidden;
+  height: 100%;
+  /* Prevent pull-to-refresh and bounce on iOS */
+  overscroll-behavior: none;
+}
+
+/* Make the root fill height on all devices */
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-surface-700); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn-primary {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             0.375rem;
+  background-color: var(--color-brand-600);
+  color:           #ffffff;
+  font-weight:     500;
+  padding:         0.5rem 1rem;
+  border-radius:   0.75rem;
+  border:          none;
+  cursor:          pointer;
+  /* Minimum tap target for mobile */
+  min-height:      44px;
+  transition:      background-color 150ms, transform 150ms, opacity 150ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:hover    { background-color: var(--color-brand-700); }
+.btn-primary:active   { transform: scale(0.96); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-ghost {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  background-color: transparent;
+  color:           #94a3b8;
+  padding:         0.5rem 0.75rem;
+  border-radius:   0.75rem;
+  border:          none;
+  cursor:          pointer;
+  /* Minimum tap target */
+  min-height:      44px;
+  min-width:       44px;
+  transition:      background-color 150ms, color 150ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-ghost:hover { background-color: var(--color-surface-800); color: #f1f5f9; }
+
+/* ── Input ────────────────────────────────────────────────────────────────── */
+.input-base {
+  width:            100%;
+  background-color: var(--color-surface-800);
+  border:           1px solid var(--color-surface-700);
+  color:            #f1f5f9;
+  border-radius:    0.75rem;
+  padding:          0.625rem 1rem;
+  font-size:        1rem; /* 16px prevents iOS zoom on focus */
+  outline:          none;
+  transition:       border-color 150ms, box-shadow 150ms;
+  -webkit-appearance: none;
+}
+.input-base::placeholder { color: #64748b; }
+.input-base:focus {
+  border-color: var(--color-brand-500);
+  box-shadow:   0 0 0 1px var(--color-brand-500);
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.card {
+  background-color: var(--color-surface-900);
+  border:           1px solid var(--color-surface-800);
+  border-radius:    1rem;
+}
+
+/* ── Status dots ──────────────────────────────────────────────────────────── */
+.status-online  { background-color: #10b981; }
+.status-away    { background-color: #f59e0b; }
+.status-busy    { background-color: #f43f5e; }
+.status-offline { background-color: #475569; }
+
+/* ── Message animation ────────────────────────────────────────────────────── */
+.message-enter { animation: slideUp 0.2s ease-out; }
+
+/* ── Typing dots ──────────────────────────────────────────────────────────── */
+.typing-dot                  { animation: pulseDot 1.4s infinite; }
+.typing-dot:nth-child(2)     { animation-delay: 0.2s; }
+.typing-dot:nth-child(3)     { animation-delay: 0.4s; }
+
+/* ── Safe area support (iPhone notch / home bar) ──────────────────────────── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-top    { padding-top:    env(safe-area-inset-top,    0px); }
