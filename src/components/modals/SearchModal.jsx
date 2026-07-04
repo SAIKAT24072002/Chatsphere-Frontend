@@ -11,6 +11,9 @@ export default function SearchModal({ onClose }) {
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
   const [scope, setScope] = useState("chat");
+  const [sender, setSender] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e) => {
@@ -21,6 +24,9 @@ export default function SearchModal({ onClose }) {
       q,
       ...(type && { type }),
       ...(scope === "chat" && activeChat ? { chatId: activeChat._id } : {}),
+      ...(sender.trim() && { sender: sender.trim() }),
+      ...(startDate && { startDate }),
+      ...(endDate && { endDate }),
     }));
     setLoading(false);
   };
@@ -60,21 +66,57 @@ export default function SearchModal({ onClose }) {
             />
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-400 font-medium mb-1 block">Sender (Username)</label>
+              <input
+                className="input-base text-sm"
+                placeholder="All users"
+                value={sender}
+                onChange={(e) => setSender(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 font-medium mb-1 block">Message Type</label>
+              <select className="input-base text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="">All types</option>
+                <option value="text">Text</option>
+                <option value="image">Images</option>
+                <option value="file">Files</option>
+                <option value="video">Videos</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-400 font-medium mb-1 block">Start Date</label>
+              <input
+                type="date"
+                className="input-base text-sm"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 font-medium mb-1 block">End Date</label>
+              <input
+                type="date"
+                className="input-base text-sm"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="flex gap-2">
-            <select className="input-base text-sm flex-1" value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="">All types</option>
-              <option value="text">Text</option>
-              <option value="image">Images</option>
-              <option value="file">Files</option>
-              <option value="video">Videos</option>
-            </select>
-            <select className="input-base text-sm flex-1" value={scope} onChange={(e) => setScope(e.target.value)}>
-              <option value="chat">This chat</option>
-              <option value="all">All chats</option>
+            <select className="input-base text-sm w-full" value={scope} onChange={(e) => setScope(e.target.value)}>
+              <option value="chat">Search inside current chat</option>
+              <option value="all">Search across all chats</option>
             </select>
           </div>
 
-          <button type="submit" disabled={loading || !q.trim()} className="btn-primary w-full py-3">
+          <button type="submit" disabled={loading || !q.trim()} className="btn-primary w-full py-3 mt-2">
             {loading ? "Searching…" : "Search"}
           </button>
         </form>
