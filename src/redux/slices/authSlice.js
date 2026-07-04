@@ -93,7 +93,10 @@ const authSlice = createSlice({
       .addCase(fetchMe.fulfilled, (state, action) => { state.user = action.payload; })
       .addCase(updateProfile.fulfilled, (state, action) => { state.user = action.payload; })
       .addCase(uploadAvatar.fulfilled, (state, action) => {
-        if (state.user) state.user.avatar = action.payload.avatar;
+        if (state.user) {
+          state.user.avatar = action.payload.avatar;
+          localStorage.setItem("user", JSON.stringify(state.user));
+        }
       });
   },
 });
