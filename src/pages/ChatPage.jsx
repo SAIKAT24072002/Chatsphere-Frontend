@@ -19,7 +19,7 @@ export default function ChatPage() {
           fixed inset-y-0 left-0 z-40 flex-shrink-0
           transition-transform duration-300 ease-in-out
           md:relative md:translate-x-0 md:z-auto
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${sidebarOpen ? "translate-x-0" : "max-md:-translate-x-full"}
         `}
       >
         <Sidebar onChatSelect={() => dispatch(setSidebarOpen(false))} />
