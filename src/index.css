@@ -74,9 +74,9 @@ body {
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-surface-700); border-radius: 9999px; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
