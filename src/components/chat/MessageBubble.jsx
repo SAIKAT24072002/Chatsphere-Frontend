@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
-export default function MessageBubble({ message, isOwn, showAvatar }) {
+export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad }) {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const [showActions, setShowActions] = useState(false);
@@ -103,7 +103,7 @@ export default function MessageBubble({ message, isOwn, showAvatar }) {
             <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
           ) : isImage ? (
             <div className="relative group/media">
-              <img src={message.fileUrl} alt={message.fileName} className="rounded-xl max-w-full max-h-56 sm:max-h-64 object-cover" />
+              <img src={message.fileUrl} alt={message.fileName} onLoad={onImageLoad} className="rounded-xl max-w-full max-h-56 sm:max-h-64 object-cover" />
               <div className="absolute top-2 right-2 opacity-0 group-hover/media:opacity-100 transition-opacity flex gap-1">
                 <button
                   onClick={(e) => { e.preventDefault(); handleDownload(message.fileUrl, message.fileName); }}

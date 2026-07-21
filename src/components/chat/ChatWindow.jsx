@@ -16,13 +16,19 @@ export default function ChatWindow({ onOpenSidebar }) {
   const { user } = useSelector((s) => s.auth);
   const messagesEndRef = useRef(null);
   const [page, setPage] = useState(1);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const messages = activeChat ? (messagesByChatId[activeChat._id] || []) : [];
   const typing = activeChat ? Object.values(typingUsers[activeChat._id] || {}) : [];
   const otherUser = activeChat && !activeChat.isGroup ? getOtherUser(activeChat, user) : null;
 
+  const scrollToBottom = (behavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
   useEffect(() => {
     if (activeChat) {
+      setInitialLoad(true);
       setPage(1);
       dispatch(fetchMessages({ chatId: activeChat._id, page: 1 }));
     }
@@ -36,8 +42,15 @@ export default function ChatWindow({ onOpenSidebar }) {
   }, [activeChat?._id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    if (messages.length > 0) {
+      if (initialLoad) {
+        scrollToBottom("auto"); // Instant scroll on chat load
+        setInitialLoad(false);
+      } else {
+        scrollToBottom("smooth"); // Smooth scroll on new messages
+      }
+    }
+  }, [messages.length, initialLoad]);
 
   /* ── Empty state (desktop only — mobile hides this via ChatPage) ── */
   if (!activeChat) {
@@ -148,7 +161,7 @@ export default function ChatWindow({ onOpenSidebar }) {
               const prev = msgs[i - 1];
               const showAvatar = !prev || prev.sender?._id !== msg.sender?._id;
               return (
-                <MessageBubble key={msg._id} message={msg} isOwn={msg.sender?._id === user._id} showAvatar={showAvatar} />
+                <MessageBubble key={msg._id} message={msg} isOwn={msg.sender?._id === user._id} showAvatar={showAvatar} onImageLoad={() => scrollToBottom("auto")} />
               );
             })}
           </div>
