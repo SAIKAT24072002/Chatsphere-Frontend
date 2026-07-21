@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setSidebarOpen } from "../redux/slices/uiSlice";
 import Sidebar from "../components/layout/Sidebar";
@@ -9,6 +9,13 @@ export default function ChatPage() {
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((s) => s.ui);
   const { activeChat } = useSelector((s) => s.chat);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <div className="flex h-screen h-[100dvh] overflow-hidden bg-surface-950">
@@ -16,10 +23,10 @@ export default function ChatPage() {
       {/* Mobile: absolute overlay when open; Desktop: always visible */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-40 flex-shrink-0
+          fixed inset-y-0 left-0 z-40 flex-shrink-0 h-full
           transition-transform duration-300 ease-in-out
           md:relative md:translate-x-0 md:z-auto
-          ${sidebarOpen ? "translate-x-0" : "max-md:-translate-x-full"}
+          ${isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : ""}
         `}
       >
         <Sidebar onChatSelect={() => dispatch(setSidebarOpen(false))} />
