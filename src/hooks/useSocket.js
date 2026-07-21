@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { initSocket, disconnectSocket } from "../utils/socket";
-import { addMessage, removeMessage, setTyping, updateReaction } from "../redux/slices/messageSlice";
+import { addMessage, removeMessage, setTyping, updateReaction, updateMessageReadStatus } from "../redux/slices/messageSlice";
 import { updateUserStatus, updateLastMessage, addNewChat, updateChatInList, setOnlineUsers } from "../redux/slices/chatSlice";
 import { updateUserStatus as updateOwnStatus } from "../redux/slices/authSlice";
 import { addNotification } from "../redux/slices/notificationSlice";
@@ -76,6 +76,10 @@ export const useSocket = () => {
 
     socket.on("messageReaction", ({ messageId, reactions }) => {
       dispatch(updateReaction({ messageId, reactions }));
+    });
+
+    socket.on("messageRead", ({ messageId, userId }) => {
+      dispatch(updateMessageReadStatus({ messageId, userId }));
     });
 
     socket.on("newGroup", (group) => {

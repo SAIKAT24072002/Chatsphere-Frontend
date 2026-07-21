@@ -42,6 +42,20 @@ export default function ChatWindow({ onOpenSidebar }) {
   }, [activeChat?._id]);
 
   useEffect(() => {
+    if (activeChat && messages.length > 0) {
+      const socket = getSocket();
+      if (socket) {
+        messages.forEach((msg) => {
+          const senderId = msg.sender?._id || msg.sender;
+          if (senderId !== user._id && !msg.readBy?.includes(user._id)) {
+            socket.emit("messageRead", { messageId: msg._id, chatId: activeChat._id });
+          }
+        });
+      }
+    }
+  }, [messages.length, activeChat?._id]);
+
+  useEffect(() => {
     if (messages.length > 0) {
       if (initialLoad) {
         scrollToBottom("auto"); // Instant scroll on chat load

@@ -175,7 +175,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
         <div className={`flex items-center gap-1 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
           <span className="text-[10px] text-slate-600">{formatMessageTime(message.createdAt)}</span>
           {isOwn && (
-            <span className="text-[10px] text-slate-600">
+            <span className={`text-[10px] ${message.readBy?.length > 0 ? "text-sky-400 font-bold" : "text-slate-600"}`}>
               {message.readBy?.length > 0 ? "✓✓" : "✓"}
             </span>
           )}

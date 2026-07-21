@@ -76,6 +76,20 @@ const messageSlice = createSlice({
         );
       });
     },
+    updateMessageReadStatus(state, action) {
+      const { messageId, userId } = action.payload;
+      Object.keys(state.messagesByChatId).forEach((chatId) => {
+        state.messagesByChatId[chatId] = state.messagesByChatId[chatId].map((m) => {
+          if (m._id === messageId) {
+            const readBy = m.readBy || [];
+            if (!readBy.includes(userId)) {
+              return { ...m, readBy: [...readBy, userId] };
+            }
+          }
+          return m;
+        });
+      });
+    },
     clearSearch(state) { state.searchResults = []; },
     clearChatMessages(state, action) {
       delete state.messagesByChatId[action.payload];
@@ -118,5 +132,5 @@ const messageSlice = createSlice({
   },
 });
 
-export const { addMessage, removeMessage, setTyping, updateReaction, clearSearch, clearChatMessages } = messageSlice.actions;
+export const { addMessage, removeMessage, setTyping, updateReaction, updateMessageReadStatus, clearSearch, clearChatMessages } = messageSlice.actions;
 export default messageSlice.reducer;
