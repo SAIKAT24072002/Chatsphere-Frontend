@@ -43,7 +43,7 @@ export default function ChatPage() {
       {/* ── Chat window ── */}
       {/* On mobile: show only when a chat is selected OR sidebar is closed */}
       <div className={`
-        flex-1 flex flex-col min-w-0
+        flex-1 flex flex-col min-w-0 h-full
         ${!activeChat && "hidden md:flex"}
       `}>
         <ChatWindow onOpenSidebar={() => dispatch(setSidebarOpen(true))} />

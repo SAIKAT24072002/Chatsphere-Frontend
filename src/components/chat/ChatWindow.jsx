@@ -129,7 +129,7 @@ export default function ChatWindow({ onOpenSidebar }) {
   }, {});
 
   return (
-    <div className="flex-1 flex flex-col bg-surface-950 min-w-0">
+    <div className="flex-1 flex flex-col bg-surface-950 min-w-0 h-full">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-surface-800 bg-surface-900 flex-shrink-0">
