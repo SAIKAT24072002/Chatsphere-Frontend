@@ -41,12 +41,19 @@ export default function Sidebar({ onChatSelect }) {
   const handleChatClick = (chat) => {
     dispatch(setActiveChat(chat));
     setTab("chats");
-    onChatSelect?.();           // closes sidebar on mobile
+    if (window.innerWidth < 768) {
+      onChatSelect?.();           // closes sidebar on mobile only
+    }
   };
 
   const handleUserClick = async (u) => {
     const res = await dispatch(accessChat(u._id));
-    if (!res.error) { setTab("chats"); onChatSelect?.(); }
+    if (!res.error) {
+      setTab("chats");
+      if (window.innerWidth < 768) {
+        onChatSelect?.();         // closes sidebar on mobile only
+      }
+    }
   };
 
   const handleLogout = () => {
