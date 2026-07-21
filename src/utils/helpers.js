@@ -14,8 +14,14 @@ export const formatChatTime = (date) => {
 };
 
 export const formatLastSeen = (date) => {
-  if (!date) return "Unknown";
-  return formatDistanceToNow(new Date(date), { addSuffix: true });
+  try {
+    if (!date) return "Unknown";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "Unknown";
+    return formatDistanceToNow(d, { addSuffix: true });
+  } catch (err) {
+    return "Unknown";
+  }
 };
 
 export const formatFileSize = (bytes) => {
