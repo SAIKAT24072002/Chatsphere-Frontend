@@ -11,6 +11,7 @@ const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad }) {
   const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
+  const { activeChat, onlineUsers = [] } = useSelector((s) => s.chat);
   const [showActions, setShowActions] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
 
@@ -63,6 +64,39 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
   }
 
   const isImage = message.type === "image" || isImageFile(message.fileUrl, null);
+
+  const getTicks = () => {
+    const hasBeenRead = message.readBy?.some((id) => {
+      const idStr = id._id || id;
+      return idStr.toString() !== user._id.toString();
+    });
+
+    if (hasBeenRead) {
+      return {
+        text: "✓✓",
+        className: "text-sky-400 font-bold",
+      };
+    }
+
+    const isOtherOnline = activeChat?.members?.some((m) => {
+      const mId = m._id || m;
+      return mId.toString() !== user._id.toString() && onlineUsers.some((oId) => oId.toString() === mId.toString());
+    });
+
+    if (isOtherOnline) {
+      return {
+        text: "✓✓",
+        className: "text-slate-500 font-semibold",
+      };
+    }
+
+    return {
+      text: "✓",
+      className: "text-slate-500",
+    };
+  };
+
+  const ticks = getTicks();
 
   return (
     <div
@@ -175,8 +209,8 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
         <div className={`flex items-center gap-1 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
           <span className="text-[10px] text-slate-600">{formatMessageTime(message.createdAt)}</span>
           {isOwn && (
-            <span className={`text-[10px] ${message.readBy?.length > 0 ? "text-sky-400 font-bold" : "text-slate-600"}`}>
-              {message.readBy?.length > 0 ? "✓✓" : "✓"}
+            <span className={`text-[10px] ${ticks.className}`}>
+              {ticks.text}
             </span>
           )}
         </div>
