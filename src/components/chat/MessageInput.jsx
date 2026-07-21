@@ -21,7 +21,13 @@ export default function MessageInput() {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 128)}px`;
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = `${Math.min(scrollHeight, 128)}px`;
+      if (scrollHeight > 128) {
+        textareaRef.current.style.overflowY = "auto";
+      } else {
+        textareaRef.current.style.overflowY = "hidden";
+      }
     }
   }, [text]);
 

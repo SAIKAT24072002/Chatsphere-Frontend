@@ -103,7 +103,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
       className={`flex items-end gap-1.5 sm:gap-2 mb-1 message-enter group ${isOwn ? "flex-row-reverse" : ""}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => { setShowActions(false); setShowEmoji(false); }}
-      onTouchStart={() => setShowActions(true)}
+      onClick={() => setShowActions(!showActions)}
     >
       {/* Avatar */}
       {!isOwn && (
@@ -218,7 +218,7 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
 
       {/* Action buttons */}
       {showActions && !message.isDeleted && (
-        <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${isOwn ? "flex-row-reverse" : ""}`}>
+        <div className={`flex items-center gap-1 transition-opacity ${isOwn ? "flex-row-reverse" : ""} opacity-100 md:opacity-0 md:group-hover:opacity-100`}>
           <div className="relative">
             <button onClick={() => setShowEmoji(!showEmoji)} className="w-6 h-6 rounded-full bg-surface-700 hover:bg-surface-600 flex items-center justify-center text-xs transition-colors">
               😊
