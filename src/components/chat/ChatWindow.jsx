@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchMessages } from "../../redux/slices/messageSlice";
 import { openModal, setSidebarOpen } from "../../redux/slices/uiSlice";
 import { setActiveChat } from "../../redux/slices/chatSlice";
+import { markChatNotificationsAsRead } from "../../redux/slices/notificationSlice";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 import { getSocket } from "../../utils/socket";
@@ -60,6 +61,12 @@ export default function ChatWindow({ onOpenSidebar }) {
       dispatch(fetchMessages({ chatId: activeChat._id, page: 1 }));
     }
   }, [activeChat?._id]);
+
+  useEffect(() => {
+    if (activeChat) {
+      dispatch(markChatNotificationsAsRead(activeChat._id));
+    }
+  }, [activeChat?._id, messages.length]);
 
   useEffect(() => {
     if (!activeChat?._id) return;

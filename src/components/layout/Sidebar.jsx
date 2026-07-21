@@ -14,7 +14,7 @@ export default function Sidebar({ onChatSelect }) {
   const navigate = useNavigate();
   const { chats, activeChat, loading, onlineUsers } = useSelector((s) => s.chat);
   const { user } = useSelector((s) => s.auth);
-  const { unreadCount } = useSelector((s) => s.notification);
+  const { unreadCount, notifications = [] } = useSelector((s) => s.notification);
   const [search, setSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [users, setUsers] = useState([]);
@@ -159,6 +159,10 @@ export default function Sidebar({ onChatSelect }) {
               const otherUser = !chat.isGroup ? chat.members?.find((m) => m._id !== user._id) : null;
               const isActive = activeChat?._id === chat._id;
               const lastMsg = chat.lastMessage;
+              const unreadChatCount = notifications.filter((n) => {
+                const nChatId = n.chat?._id || n.chat;
+                return String(nChatId) === String(chat._id) && !n.isRead;
+              }).length;
 
               return (
                 <button
@@ -191,12 +195,19 @@ export default function Sidebar({ onChatSelect }) {
                       <span className="font-medium text-slate-200 text-sm truncate">{name}</span>
                       {lastMsg && <span className="text-xs text-slate-500 flex-shrink-0 ml-2">{formatChatTime(lastMsg.createdAt)}</span>}
                     </div>
-                    {lastMsg && (
-                      <p className="text-xs text-slate-500 truncate mt-0.5">
-                        {lastMsg.sender?._id === user._id ? "You: " : ""}
-                        {lastMsg.isDeleted ? <em>Message deleted</em> : lastMsg.type === "text" ? lastMsg.content : `📎 ${lastMsg.type}`}
-                      </p>
-                    )}
+                    <div className="flex items-center justify-between mt-0.5">
+                      {lastMsg && (
+                        <p className="text-xs text-slate-500 truncate mr-2 flex-1">
+                          {lastMsg.sender?._id === user._id ? "You: " : ""}
+                          {lastMsg.isDeleted ? <em>Message deleted</em> : lastMsg.type === "text" ? lastMsg.content : `📎 ${lastMsg.type}`}
+                        </p>
+                      )}
+                      {unreadChatCount > 0 && (
+                        <span className="w-5 h-5 bg-emerald-500 text-[10px] font-bold text-white rounded-full flex items-center justify-center flex-shrink-0 animate-pulse-dot">
+                          {unreadChatCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </button>
               );
