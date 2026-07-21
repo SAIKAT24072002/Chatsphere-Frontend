@@ -41,6 +41,7 @@ const messageSlice = createSlice({
   name: "message",
   initialState: {
     messagesByChatId: {},
+    metadataByChatId: {},
     searchResults: [],
     typingUsers: {},
     loading: false,
@@ -100,7 +101,7 @@ const messageSlice = createSlice({
       .addCase(fetchMessages.pending, (state) => { state.loading = true; })
       .addCase(fetchMessages.fulfilled, (state, action) => {
         state.loading = false;
-        const { chatId, messages, page } = action.payload;
+        const { chatId, messages, page, pages, total } = action.payload;
         if (page === 1) {
           state.messagesByChatId[chatId] = messages;
         } else {
@@ -109,6 +110,8 @@ const messageSlice = createSlice({
             ...(state.messagesByChatId[chatId] || []),
           ];
         }
+        if (!state.metadataByChatId) state.metadataByChatId = {};
+        state.metadataByChatId[chatId] = { pages, total, currentPage: page };
       })
       .addCase(fetchMessages.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
       .addCase(sendMessage.fulfilled, (state, action) => {

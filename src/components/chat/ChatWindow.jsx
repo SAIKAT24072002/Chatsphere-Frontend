@@ -12,11 +12,14 @@ import { getChatName, getChatAvatar, getOtherUser, formatLastSeen, getInitials }
 export default function ChatWindow({ onOpenSidebar }) {
   const dispatch = useDispatch();
   const { activeChat } = useSelector((s) => s.chat);
-  const { messagesByChatId, typingUsers, loading } = useSelector((s) => s.message);
+  const { messagesByChatId, typingUsers, loading, metadataByChatId } = useSelector((s) => s.message);
   const { user } = useSelector((s) => s.auth);
   const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
+  const scrollHeightRef = useRef(0);
   const [page, setPage] = useState(1);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const messages = activeChat ? (messagesByChatId[activeChat._id] || []) : [];
   const typing = activeChat ? Object.values(typingUsers[activeChat._id] || {}) : [];
@@ -24,6 +27,24 @@ export default function ChatWindow({ onOpenSidebar }) {
 
   const scrollToBottom = (behavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  const handleScroll = async () => {
+    const container = containerRef.current;
+    if (!container || loading || isFetchingMore || !activeChat) return;
+
+    if (container.scrollTop === 0) {
+      const metadata = metadataByChatId[activeChat._id];
+      if (metadata && metadata.currentPage < metadata.pages) {
+        scrollHeightRef.current = container.scrollHeight;
+        setIsFetchingMore(true);
+
+        const nextPage = metadata.currentPage + 1;
+        await dispatch(fetchMessages({ chatId: activeChat._id, page: nextPage }));
+
+        setIsFetchingMore(false);
+      }
+    }
   };
 
   useEffect(() => {
@@ -56,15 +77,23 @@ export default function ChatWindow({ onOpenSidebar }) {
   }, [messages.length, activeChat?._id]);
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (container && isFetchingMore) {
+      const diff = container.scrollHeight - scrollHeightRef.current;
+      container.scrollTop = diff;
+    }
+  }, [messages, isFetchingMore]);
+
+  useEffect(() => {
     if (messages.length > 0) {
       if (initialLoad) {
         scrollToBottom("auto"); // Instant scroll on chat load
         setInitialLoad(false);
-      } else {
-        scrollToBottom("smooth"); // Smooth scroll on new messages
+      } else if (!isFetchingMore) {
+        scrollToBottom("smooth"); // Smooth scroll on new messages (avoid during fetch more)
       }
     }
-  }, [messages.length, initialLoad]);
+  }, [messages.length, initialLoad, isFetchingMore]);
 
   /* ── Empty state (desktop only — mobile hides this via ChatPage) ── */
   if (!activeChat) {
@@ -157,7 +186,7 @@ export default function ChatWindow({ onOpenSidebar }) {
       </div>
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-1">
+      <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-1">
         {loading && messages.length === 0 && (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
