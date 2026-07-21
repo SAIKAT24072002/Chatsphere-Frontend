@@ -9,7 +9,13 @@ import toast from "react-hot-toast";
 export const useSocket = () => {
   const dispatch = useDispatch();
   const { token, user } = useSelector((s) => s.auth);
+  const { activeChat } = useSelector((s) => s.chat);
   const socketRef = useRef(null);
+  const activeChatRef = useRef(activeChat);
+
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   useEffect(() => {
     if (!token || !user) return;
@@ -35,9 +41,10 @@ export const useSocket = () => {
       dispatch(updateLastMessage({ chatId, message }));
 
       // Notify if not current chat
-      if (message.sender?._id !== user._id) {
+      const activeChatId = activeChatRef.current?._id;
+      if (message.sender?._id !== user._id && chatId !== activeChatId) {
         dispatch(addNotification({
-          _id: Date.now(),
+          _id: message._id || Date.now(),
           type: "message",
           title: `${message.sender?.username}`,
           body: message.type === "text" ? message.content : `Sent a ${message.type}`,
@@ -45,6 +52,7 @@ export const useSocket = () => {
           isRead: false,
           createdAt: new Date().toISOString(),
         }));
+        toast(`New message from ${message.sender?.username}: ${message.type === "text" ? message.content : `sent a ${message.type}`}`, { icon: "💬" });
       }
     });
 

@@ -11,7 +11,7 @@ export default function ChatPage() {
   const { activeChat } = useSelector((s) => s.chat);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-950">
+    <div className="flex h-screen h-[100dvh] overflow-hidden bg-surface-950">
       {/* ── Sidebar ── */}
       {/* Mobile: absolute overlay when open; Desktop: always visible */}
       <div

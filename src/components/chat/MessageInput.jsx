@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { sendMessage } from "../../redux/slices/messageSlice";
 import { updateLastMessage } from "../../redux/slices/chatSlice";
@@ -15,6 +15,15 @@ export default function MessageInput() {
   const [preview, setPreview] = useState(null);
   const fileRef = useRef();
   const typingRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  // Auto-resize textarea height based on content
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 128)}px`;
+    }
+  }, [text]);
 
   const emitTyping = useCallback((isTyping) => {
     const socket = getSocket();
@@ -77,6 +86,19 @@ export default function MessageInput() {
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const ALLOWED_MIME = [
+      "image/jpeg", "image/png", "image/gif", "image/webp",
+      "video/mp4", "video/quicktime",
+      "application/pdf", "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain", "application/zip",
+    ];
+    if (!ALLOWED_MIME.includes(file.type)) {
+      toast.error("File type not allowed. Please upload images, videos, PDFs, Word docs, TXT, or ZIP files.");
+      return;
+    }
+
     if (file.size > 25 * 1024 * 1024) { toast.error("File too large (max 25MB)"); return; }
 
     setUploading(true);
@@ -140,17 +162,13 @@ export default function MessageInput() {
 
         {/* Textarea */}
         <textarea
+          ref={textareaRef}
           className="input-base flex-1 resize-none max-h-32 min-h-[42px] py-2.5 text-sm"
           placeholder="Type a message…"
           value={text}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
           rows={1}
-          style={{ height: "auto" }}
-          onInput={(e) => {
-            e.target.style.height = "auto";
-            e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
-          }}
         />
 
         {/* Send */}
