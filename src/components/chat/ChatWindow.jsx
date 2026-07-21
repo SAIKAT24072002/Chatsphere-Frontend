@@ -26,7 +26,13 @@ export default function ChatWindow({ onOpenSidebar }) {
   const otherUser = activeChat && !activeChat.isGroup ? getOtherUser(activeChat, user) : null;
 
   const scrollToBottom = (behavior = "smooth") => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
+    const container = containerRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior,
+      });
+    }
   };
 
   const handleScroll = async () => {
