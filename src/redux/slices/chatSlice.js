@@ -66,7 +66,26 @@ const chatSlice = createSlice({
   },
   reducers: {
     setActiveChat(state, action) { state.activeChat = action.payload; },
-    setOnlineUsers(state, action) { state.onlineUsers = action.payload; },
+    setOnlineUsers(state, action) {
+      const onlineIds = action.payload || [];
+      state.onlineUsers = onlineIds;
+      const updateMember = (m) => {
+        const isOnline = onlineIds.includes(m._id.toString());
+        if (!isOnline) return { ...m, status: "offline" };
+        if (m.status === "offline" || !m.status) return { ...m, status: "online" };
+        return m;
+      };
+      state.chats = state.chats.map((chat) => ({
+        ...chat,
+        members: chat.members.map(updateMember),
+      }));
+      if (state.activeChat) {
+        state.activeChat = {
+          ...state.activeChat,
+          members: state.activeChat.members.map(updateMember),
+        };
+      }
+    },
     updateUserStatus(state, action) {
       const { userId, status } = action.payload;
       state.chats = state.chats.map((chat) => ({

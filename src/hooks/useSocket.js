@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { initSocket, disconnectSocket } from "../utils/socket";
 import { addMessage, removeMessage, setTyping, updateReaction } from "../redux/slices/messageSlice";
 import { updateUserStatus, updateLastMessage, addNewChat, updateChatInList, setOnlineUsers } from "../redux/slices/chatSlice";
+import { updateUserStatus as updateOwnStatus } from "../redux/slices/authSlice";
 import { addNotification } from "../redux/slices/notificationSlice";
 import toast from "react-hot-toast";
 
@@ -23,15 +24,24 @@ export const useSocket = () => {
     const socket = initSocket(token);
     socketRef.current = socket;
 
-    socket.on("connect", () => console.log("Socket connected:", socket.id));
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      dispatch(updateOwnStatus({ userId: user._id, status: "online" }));
+    });
     socket.on("connect_error", (err) => console.error("Socket error:", err.message));
 
     socket.on("onlineUsers", (userIds) => {
       dispatch(setOnlineUsers(userIds));
+      if (userIds.includes(user._id)) {
+        dispatch(updateOwnStatus({ userId: user._id, status: "online" }));
+      }
     });
 
     socket.on("userStatus", ({ userId, status }) => {
       dispatch(updateUserStatus({ userId, status }));
+      if (userId === user._id) {
+        dispatch(updateOwnStatus({ userId, status }));
+      }
     });
 
     socket.on("newMessage", (message) => {
@@ -87,6 +97,7 @@ export const useSocket = () => {
 
     return () => {
       disconnectSocket();
+      dispatch(updateOwnStatus({ userId: user._id, status: "offline" }));
     };
   }, [token, user?._id]);
 

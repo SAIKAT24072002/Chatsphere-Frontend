@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 export default function Sidebar({ onChatSelect }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { chats, activeChat, loading } = useSelector((s) => s.chat);
+  const { chats, activeChat, loading, onlineUsers } = useSelector((s) => s.chat);
   const { user } = useSelector((s) => s.auth);
   const { unreadCount } = useSelector((s) => s.notification);
   const [search, setSearch] = useState("");
@@ -207,19 +207,23 @@ export default function Sidebar({ onChatSelect }) {
             ) : users.length === 0 ? (
               <div className="p-4 text-center text-slate-500 text-sm">No users found</div>
             ) : (
-              users.map((u) => (
-                <button
-                  key={u._id}
-                  onClick={() => handleUserClick(u)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-800 transition-colors"
-                >
-                  <Avatar user={u} size="sm" showStatus />
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-slate-200 truncate">{u.username}</p>
-                    <p className="text-xs text-slate-500 truncate">{u.customStatus || u.status}</p>
-                  </div>
-                </button>
-              ))
+              users.map((u) => {
+                const isOnline = onlineUsers.includes(u._id);
+                const userWithStatus = { ...u, status: isOnline ? "online" : u.status };
+                return (
+                  <button
+                    key={u._id}
+                    onClick={() => handleUserClick(u)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-800 transition-colors"
+                  >
+                    <Avatar user={userWithStatus} size="sm" showStatus />
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium text-slate-200 truncate">{u.username}</p>
+                      <p className="text-xs text-slate-500 truncate">{u.customStatus || userWithStatus.status}</p>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         )}
