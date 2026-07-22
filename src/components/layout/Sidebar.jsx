@@ -102,11 +102,11 @@ export default function Sidebar({ onChatSelect }) {
       {/* ── Search / Tabs ── */}
       <div className="px-3 py-3 space-y-2 border-b border-surface-800">
         <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
-            className="input-base pl-9 py-2 text-sm"
+            className="input-base !pl-10 !pr-8 py-2 text-sm"
             placeholder="Search chats or find users…"
             value={tab === "chats" ? search : userSearch}
             onChange={(e) => {
@@ -118,7 +118,7 @@ export default function Sidebar({ onChatSelect }) {
           {(search || userSearch) && (
             <button
               onClick={() => { setSearch(""); setUserSearch(""); setTab("chats"); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-lg leading-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-lg leading-none z-10"
             >×</button>
           )}
         </div>

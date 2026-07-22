@@ -134,7 +134,7 @@ export default function MessageInput() {
   if (!activeChat) return null;
 
   return (
-    <div className="px-3 sm:px-4 py-3 border-t border-surface-800 bg-surface-900 flex-shrink-0">
+    <div className="px-3 sm:px-4 py-3 border-t border-surface-800 bg-surface-900 flex-shrink-0 safe-bottom">
       {/* File preview */}
       {preview && (
         <div className="flex items-center gap-3 mb-3 p-2.5 bg-surface-800 rounded-xl">

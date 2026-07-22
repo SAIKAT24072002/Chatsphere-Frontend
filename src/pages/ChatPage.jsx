@@ -12,10 +12,23 @@ export default function ChatPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        dispatch(setSidebarOpen(true));
+      }
+    };
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isMobile && !activeChat) {
+      dispatch(setSidebarOpen(true));
+    }
+  }, [isMobile, activeChat, dispatch]);
 
   return (
     <div className="flex h-screen h-[100dvh] overflow-hidden bg-surface-950">
@@ -33,7 +46,7 @@ export default function ChatPage() {
       </div>
 
       {/* Mobile backdrop */}
-      {sidebarOpen && (
+      {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 z-30 bg-black/60 md:hidden"
           onClick={() => dispatch(setSidebarOpen(false))}
@@ -44,7 +57,7 @@ export default function ChatPage() {
       {/* On mobile: show only when a chat is selected OR sidebar is closed */}
       <div className={`
         flex-1 flex flex-col min-w-0 h-full
-        ${!activeChat && "hidden md:flex"}
+        ${!activeChat && isMobile ? "hidden md:flex" : "flex"}
       `}>
         <ChatWindow onOpenSidebar={() => dispatch(setSidebarOpen(true))} />
       </div>
