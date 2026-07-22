@@ -53,17 +53,12 @@ export const useSocket = () => {
       // Notify if not current chat
       const activeChatId = activeChatRef.current?._id;
       if (message.sender?._id !== user._id && chatId !== activeChatId) {
-        dispatch(addNotification({
-          _id: message._id || Date.now(),
-          type: "message",
-          title: `${message.sender?.username}`,
-          body: message.type === "text" ? message.content : `Sent a ${message.type}`,
-          chat: chatId,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        }));
         toast(`New message from ${message.sender?.username}: ${message.type === "text" ? message.content : `sent a ${message.type}`}`, { icon: "💬" });
       }
+    });
+
+    socket.on("newNotification", (notification) => {
+      dispatch(addNotification(notification));
     });
 
     socket.on("messageDeleted", ({ messageId }) => {

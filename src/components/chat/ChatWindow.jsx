@@ -199,7 +199,7 @@ export default function ChatWindow({ onOpenSidebar }) {
       </div>
 
       {/* ── Messages ── */}
-      <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-1">
+      <div ref={containerRef} onScroll={handleScroll} className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-4 space-y-1">
         {loading && messages.length === 0 && (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />

@@ -51,37 +51,48 @@ export default function MessageInput() {
     if (!activeChat) return;
 
     emitTyping(false);
+    const textToSend = text.trim();
 
-    if (preview) {
-      const res = await dispatch(sendMessage({
-        chatId: activeChat._id,
-        content: text.trim() || preview.name,
-        type: preview.type,
-        fileUrl: preview.url,
-        publicId: preview.publicId,
-        fileName: preview.name,
-        fileSize: preview.size,
-      }));
-      if (!res.error) {
-        dispatch(updateLastMessage({ chatId: activeChat._id, message: res.payload }));
-        setPreview(null);
-        setText("");
+    try {
+      if (preview) {
+        const res = await dispatch(sendMessage({
+          chatId: activeChat._id,
+          content: textToSend || preview.name,
+          type: preview.type,
+          fileUrl: preview.url,
+          publicId: preview.publicId,
+          fileName: preview.name,
+          fileSize: preview.size,
+        }));
+        if (!res.error) {
+          dispatch(updateLastMessage({ chatId: activeChat._id, message: res.payload }));
+          setPreview(null);
+          setText("");
+          if (textareaRef.current) textareaRef.current.style.height = "auto";
+        } else {
+          toast.error(res.payload || "Failed to send message");
+        }
+      } else if (textToSend) {
+        const res = await dispatch(sendMessage({
+          chatId: activeChat._id,
+          content: textToSend,
+          type: "text",
+          fileUrl: "",
+          publicId: "",
+          fileName: "",
+          fileSize: "",
+        }));
+        if (!res.error) {
+          dispatch(updateLastMessage({ chatId: activeChat._id, message: res.payload }));
+          setPreview(null);
+          setText("");
+          if (textareaRef.current) textareaRef.current.style.height = "auto";
+        } else {
+          toast.error(res.payload || "Failed to send message");
+        }
       }
-    } else if (text.trim()) {
-      const res = await dispatch(sendMessage({
-        chatId: activeChat._id,
-        content: text.trim(),
-        type: "text",
-        fileUrl: "",
-        publicId: "",
-        fileName: "",
-        fileSize: "",
-      }));
-      if (!res.error) {
-        dispatch(updateLastMessage({ chatId: activeChat._id, message: res.payload }));
-        setPreview(null);
-        setText("");
-      }
+    } catch (err) {
+      toast.error("An unexpected error occurred while sending message");
     }
   };
 

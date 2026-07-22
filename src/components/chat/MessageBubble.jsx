@@ -19,9 +19,11 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
 
   const handleDownload = async (url, fileName) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+      const response = await api.get("/upload/download", {
+        params: { url, fileName },
+        responseType: "blob",
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = fileName || "download";
