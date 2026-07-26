@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Toaster } from "react-hot-toast";
 import LoginPage from "./pages/auth/LoginPage";
@@ -10,19 +10,22 @@ import { useSocket } from "./hooks/useSocket";
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useSelector((s) => s.auth);
-  return token ? children : <Navigate to="/login" replace />;
+  const location = useLocation();
+  return token ? children : <Navigate to={`/login${location.search}`} replace />;
 };
 
 const AdminRoute = ({ children }) => {
   const { token, user } = useSelector((s) => s.auth);
-  if (!token) return <Navigate to="/login" replace />;
-  if (user?.role !== "admin") return <Navigate to="/" replace />;
+  const location = useLocation();
+  if (!token) return <Navigate to={`/login${location.search}`} replace />;
+  if (user?.role !== "admin") return <Navigate to={`/${location.search}`} replace />;
   return children;
 };
 
 const PublicRoute = ({ children }) => {
   const { token } = useSelector((s) => s.auth);
-  return token ? <Navigate to="/" replace /> : children;
+  const location = useLocation();
+  return token ? <Navigate to={`/${location.search}`} replace /> : children;
 };
 
 function AppContent() {

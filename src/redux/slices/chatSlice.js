@@ -158,7 +158,14 @@ const chatSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchChats.pending, (state) => { state.loading = true; })
-      .addCase(fetchChats.fulfilled, (state, action) => { state.loading = false; state.chats = action.payload; })
+      .addCase(fetchChats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.chats = action.payload;
+        if (state.activeChat) {
+          const exists = state.chats.some((c) => c._id === state.activeChat._id);
+          if (!exists) state.chats.unshift(state.activeChat);
+        }
+      })
       .addCase(fetchChats.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
       .addCase(accessChat.fulfilled, (state, action) => {
         const exists = state.chats.find((c) => c._id === action.payload._id);

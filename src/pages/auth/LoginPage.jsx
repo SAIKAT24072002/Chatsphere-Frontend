@@ -18,7 +18,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await dispatch(login(form));
-    if (!res.error) { toast.success("Welcome back!"); navigate("/"); }
+    if (!res.error) { toast.success("Welcome back!"); navigate("/" + window.location.search); }
   };
 
   return (

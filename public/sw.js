@@ -53,20 +53,30 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      const targetUrl = chatId ? `${self.location.origin}/?chatId=${chatId}` : `${self.location.origin}/`;
+
       // Look for an existing open window of our app
       for (const client of clientList) {
-        if (client.url.startsWith(self.location.origin) && "focus" in client) {
-          return client.focus().then((focusedClient) => {
-            if (chatId) {
-              focusedClient.postMessage({ type: "SELECT_CHAT", chatId });
-            }
-          });
+        if (client.url.startsWith(self.location.origin)) {
+          if ("navigate" in client) {
+            return client.navigate(targetUrl).then((navigatedClient) => {
+              if (navigatedClient && "focus" in navigatedClient) {
+                return navigatedClient.focus();
+              }
+            });
+          } else {
+            // Fallback to focus + postMessage
+            return client.focus().then((focusedClient) => {
+              if (chatId) {
+                focusedClient.postMessage({ type: "SELECT_CHAT", chatId });
+              }
+            });
+          }
         }
       }
       // If no window is open, open a new one with deep link search query
       if (self.clients.openWindow) {
-        const url = chatId ? `/?chatId=${chatId}` : "/";
-        return self.clients.openWindow(url);
+        return self.clients.openWindow(targetUrl);
       }
     })
   );

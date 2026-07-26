@@ -11,25 +11,34 @@ export default function ChatPage() {
   const { sidebarOpen } = useSelector((s) => s.ui);
   const { chats, activeChat } = useSelector((s) => s.chat);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [pendingChatId, setPendingChatId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("chatId") || params.get("conversationId");
+  });
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const chatId = params.get("chatId") || params.get("conversationId");
-    if (chatId) {
+    if (pendingChatId) {
       // Remove query parameters from URL bar without reloading
       const url = new URL(window.location);
-      url.searchParams.delete("chatId");
-      url.searchParams.delete("conversationId");
-      window.history.replaceState(null, "", url.pathname + url.search);
+      if (url.searchParams.has("chatId") || url.searchParams.has("conversationId")) {
+        url.searchParams.delete("chatId");
+        url.searchParams.delete("conversationId");
+        window.history.replaceState(null, "", url.pathname + url.search);
+      }
 
-      const chat = chats.find((c) => c._id === chatId);
+      const chat = chats.find((c) => c._id === pendingChatId);
       if (chat) {
         dispatch(setActiveChat(chat));
+        setPendingChatId(null);
+      } else if (chats.length > 0) {
+        dispatch(fetchChatById(pendingChatId));
+        setPendingChatId(null);
       } else {
-        dispatch(fetchChatById(chatId));
+        dispatch(fetchChatById(pendingChatId));
+        setPendingChatId(null);
       }
     }
-  }, [chats, dispatch]);
+  }, [pendingChatId, chats, dispatch]);
 
   useEffect(() => {
     const handleResize = () => {

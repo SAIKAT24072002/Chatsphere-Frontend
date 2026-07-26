@@ -20,7 +20,7 @@ export default function SignupPage() {
     if (form.password !== form.confirm) return toast.error("Passwords do not match");
     if (form.password.length < 6) return toast.error("Password must be at least 6 characters");
     const res = await dispatch(register({ username: form.username, email: form.email, password: form.password }));
-    if (!res.error) { toast.success("Account created!"); navigate("/"); }
+    if (!res.error) { toast.success("Account created!"); navigate("/" + window.location.search); }
   };
 
   return (
