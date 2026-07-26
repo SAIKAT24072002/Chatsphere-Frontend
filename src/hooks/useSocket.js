@@ -24,6 +24,25 @@ export const useSocket = () => {
   }, [chats]);
 
   useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleSWMessage = (event) => {
+      if (event.data && event.data.type === "SELECT_CHAT") {
+        const chatId = event.data.chatId;
+        dispatch(fetchChatById(chatId));
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handleSWMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener("message", handleSWMessage);
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     if (!token || !user) return;
 
     const socket = initSocket(token);
@@ -64,6 +83,32 @@ export const useSocket = () => {
       const activeChatId = activeChatRef.current?._id;
       if (message.sender?._id !== user._id && chatId !== activeChatId) {
         toast(`New message from ${message.sender?.username}: ${message.type === "text" ? message.content : `sent a ${message.type}`}`, { icon: "💬" });
+
+        // Native background notification
+        if (document.visibilityState === "hidden") {
+          const title = `New message from ${message.sender?.username}`;
+          const body = message.type === "text" ? message.content : `Sent a ${message.type}`;
+          
+          if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: "SHOW_NOTIFICATION",
+              title,
+              body,
+              chatId,
+            });
+          } else if ("Notification" in window && Notification.permission === "granted") {
+            const notification = new Notification(title, {
+              body,
+              icon: "/favicon.svg",
+              data: { chatId },
+            });
+            notification.onclick = (e) => {
+              e.preventDefault();
+              window.focus();
+              dispatch(fetchChatById(chatId));
+            };
+          }
+        }
       }
     });
 

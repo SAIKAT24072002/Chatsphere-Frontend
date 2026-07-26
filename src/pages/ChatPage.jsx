@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setSidebarOpen } from "../redux/slices/uiSlice";
+import { setActiveChat, fetchChatById } from "../redux/slices/chatSlice";
 import Sidebar from "../components/layout/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
 import ModalManager from "../components/modals/ModalManager";
@@ -8,8 +9,27 @@ import ModalManager from "../components/modals/ModalManager";
 export default function ChatPage() {
   const dispatch = useDispatch();
   const { sidebarOpen } = useSelector((s) => s.ui);
-  const { activeChat } = useSelector((s) => s.chat);
+  const { chats, activeChat } = useSelector((s) => s.chat);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const chatId = params.get("chatId") || params.get("conversationId");
+    if (chatId) {
+      // Remove query parameters from URL bar without reloading
+      const url = new URL(window.location);
+      url.searchParams.delete("chatId");
+      url.searchParams.delete("conversationId");
+      window.history.replaceState(null, "", url.pathname + url.search);
+
+      const chat = chats.find((c) => c._id === chatId);
+      if (chat) {
+        dispatch(setActiveChat(chat));
+      } else {
+        dispatch(fetchChatById(chatId));
+      }
+    }
+  }, [chats, dispatch]);
 
   useEffect(() => {
     const handleResize = () => {
