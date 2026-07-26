@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { initSocket, disconnectSocket } from "../utils/socket";
 import { addMessage, removeMessage, setTyping, updateReaction, updateMessageReadStatus } from "../redux/slices/messageSlice";
-import { updateUserStatus, updateLastMessage, addNewChat, updateChatInList, setOnlineUsers } from "../redux/slices/chatSlice";
+import { updateUserStatus, updateLastMessage, addNewChat, updateChatInList, setOnlineUsers, fetchChatById } from "../redux/slices/chatSlice";
 import { updateUserStatus as updateOwnStatus } from "../redux/slices/authSlice";
 import { addNotification } from "../redux/slices/notificationSlice";
 import toast from "react-hot-toast";
@@ -10,13 +10,18 @@ import toast from "react-hot-toast";
 export const useSocket = () => {
   const dispatch = useDispatch();
   const { token, user } = useSelector((s) => s.auth);
-  const { activeChat } = useSelector((s) => s.chat);
+  const { chats, activeChat } = useSelector((s) => s.chat);
   const socketRef = useRef(null);
   const activeChatRef = useRef(activeChat);
+  const chatsRef = useRef(chats);
 
   useEffect(() => {
     activeChatRef.current = activeChat;
   }, [activeChat]);
+
+  useEffect(() => {
+    chatsRef.current = chats;
+  }, [chats]);
 
   useEffect(() => {
     if (!token || !user) return;
@@ -48,7 +53,12 @@ export const useSocket = () => {
       console.log("NEW MESSAGE RECEIVED:", message);
       dispatch(addMessage(message));
       const chatId = message.chat?._id || message.chat;
-      dispatch(updateLastMessage({ chatId, message }));
+      const exists = chatsRef.current.some((c) => c._id === chatId);
+      if (!exists) {
+        dispatch(fetchChatById(chatId));
+      } else {
+        dispatch(updateLastMessage({ chatId, message }));
+      }
 
       // Notify if not current chat
       const activeChatId = activeChatRef.current?._id;

@@ -138,54 +138,69 @@ export default function MessageBubble({ message, isOwn, showAvatar, onImageLoad 
           ) : message.type === "text" ? (
             <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
           ) : isImage ? (
-            <div className="relative group/media">
-              <img src={message.fileUrl} alt={message.fileName} onLoad={onImageLoad} className="rounded-xl max-w-full max-h-56 sm:max-h-64 object-cover" />
-              <div className="absolute top-2 right-2 opacity-0 group-hover/media:opacity-100 transition-opacity flex gap-1">
-                <button
-                  onClick={(e) => { e.preventDefault(); handleDownload(message.fileUrl, message.fileName); }}
-                  className="p-1.5 bg-black/60 hover:bg-black/80 rounded-lg text-white transition-colors cursor-pointer"
-                  title="Download Image"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
+            <div className="flex flex-col gap-2">
+              <div className="relative group/media">
+                <img src={message.fileUrl} alt={message.fileName} onLoad={onImageLoad} className="rounded-xl max-w-full max-h-56 sm:max-h-64 object-cover" />
+                <div className="absolute top-2 right-2 opacity-0 group-hover/media:opacity-100 transition-opacity flex gap-1">
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleDownload(message.fileUrl, message.fileName); }}
+                    className="p-1.5 bg-black/60 hover:bg-black/80 rounded-lg text-white transition-colors cursor-pointer"
+                    title="Download Image"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                </div>
               </div>
+              {message.content && message.content !== message.fileName && (
+                <p className="whitespace-pre-wrap break-words leading-relaxed px-1 pb-1">{message.content}</p>
+              )}
             </div>
           ) : message.type === "video" ? (
-            <div className="relative group/media">
-              <video src={message.fileUrl} controls className="rounded-xl max-w-full max-h-40 sm:max-h-48" />
-              <div className="absolute top-2 right-2 opacity-0 group-hover/media:opacity-100 transition-opacity">
+            <div className="flex flex-col gap-2">
+              <div className="relative group/media">
+                <video src={message.fileUrl} controls className="rounded-xl max-w-full max-h-40 sm:max-h-48" />
+                <div className="absolute top-2 right-2 opacity-0 group-hover/media:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleDownload(message.fileUrl, message.fileName); }}
+                    className="p-1.5 bg-black/60 hover:bg-black/80 rounded-lg text-white transition-colors cursor-pointer"
+                    title="Download Video"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              {message.content && message.content !== message.fileName && (
+                <p className="whitespace-pre-wrap break-words leading-relaxed px-1 pb-1">{message.content}</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-4">
+                <a href={message.fileUrl} target="_blank" rel="noreferrer"
+                  className={`flex items-center gap-2 hover:opacity-80 transition-opacity ${isOwn ? "text-brand-100" : "text-brand-400"}`}>
+                  <div className="w-8 h-8 bg-surface-700 rounded-lg flex items-center justify-center text-sm flex-shrink-0">📄</div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{message.fileName}</p>
+                    <p className="text-xs opacity-60">{formatFileSize(message.fileSize)}</p>
+                  </div>
+                </a>
                 <button
                   onClick={(e) => { e.preventDefault(); handleDownload(message.fileUrl, message.fileName); }}
-                  className="p-1.5 bg-black/60 hover:bg-black/80 rounded-lg text-white transition-colors cursor-pointer"
-                  title="Download Video"
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isOwn ? "hover:bg-brand-700 text-brand-100" : "hover:bg-surface-700 text-slate-400"}`}
+                  title="Download File"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                 </button>
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-4">
-              <a href={message.fileUrl} target="_blank" rel="noreferrer"
-                className={`flex items-center gap-2 hover:opacity-80 transition-opacity ${isOwn ? "text-brand-100" : "text-brand-400"}`}>
-                <div className="w-8 h-8 bg-surface-700 rounded-lg flex items-center justify-center text-sm flex-shrink-0">📄</div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{message.fileName}</p>
-                  <p className="text-xs opacity-60">{formatFileSize(message.fileSize)}</p>
-                </div>
-              </a>
-              <button
-                onClick={(e) => { e.preventDefault(); handleDownload(message.fileUrl, message.fileName); }}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${isOwn ? "hover:bg-brand-700 text-brand-100" : "hover:bg-surface-700 text-slate-400"}`}
-                title="Download File"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
+              {message.content && message.content !== message.fileName && (
+                <p className="whitespace-pre-wrap break-words leading-relaxed px-1 pb-1">{message.content}</p>
+              )}
             </div>
           )}
 

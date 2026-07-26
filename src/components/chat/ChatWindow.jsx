@@ -81,7 +81,10 @@ export default function ChatWindow({ onOpenSidebar }) {
       if (socket) {
         messages.forEach((msg) => {
           const senderId = msg.sender?._id || msg.sender;
-          if (senderId !== user._id && !msg.readBy?.includes(user._id)) {
+          const readByList = msg.readBy || [];
+          const alreadyRead = readByList.some(r => (r._id || r).toString() === user._id.toString());
+          const senderIdStr = senderId?._id || senderId;
+          if (senderIdStr && senderIdStr.toString() !== user._id.toString() && !alreadyRead) {
             socket.emit("messageRead", { messageId: msg._id, chatId: activeChat._id });
           }
         });

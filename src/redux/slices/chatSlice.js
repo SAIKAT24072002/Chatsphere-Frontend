@@ -10,6 +10,15 @@ export const fetchChats = createAsyncThunk("chat/fetchChats", async (_, { reject
   }
 });
 
+export const fetchChatById = createAsyncThunk("chat/fetchChatById", async (chatId, { rejectWithValue }) => {
+  try {
+    const res = await api.get(`/chats/${chatId}`);
+    return res.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message);
+  }
+});
+
 export const accessChat = createAsyncThunk("chat/accessChat", async (userId, { rejectWithValue }) => {
   try {
     const res = await api.post("/chats", { userId });
@@ -154,6 +163,15 @@ const chatSlice = createSlice({
       .addCase(accessChat.fulfilled, (state, action) => {
         const exists = state.chats.find((c) => c._id === action.payload._id);
         if (!exists) state.chats.unshift(action.payload);
+        state.activeChat = action.payload;
+      })
+      .addCase(fetchChatById.fulfilled, (state, action) => {
+        const exists = state.chats.find((c) => c._id === action.payload._id);
+        if (!exists) {
+          state.chats.unshift(action.payload);
+        } else {
+          state.chats = state.chats.map((c) => c._id === action.payload._id ? action.payload : c);
+        }
         state.activeChat = action.payload;
       })
       .addCase(createGroup.fulfilled, (state, action) => {

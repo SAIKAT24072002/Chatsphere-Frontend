@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { markAllRead } from "../../redux/slices/notificationSlice";
-import { setActiveChat } from "../../redux/slices/chatSlice";
+import { setActiveChat, fetchChatById } from "../../redux/slices/chatSlice";
 import { formatDistanceToNow } from "date-fns";
 
 export default function NotificationsModal({ onClose }) {
@@ -10,8 +10,13 @@ export default function NotificationsModal({ onClose }) {
 
   const handleClick = (n) => {
     if (n.chat) {
-      const chat = chats.find((c) => c._id === (n.chat?._id || n.chat));
-      if (chat) dispatch(setActiveChat(chat));
+      const chatId = n.chat?._id || n.chat;
+      const chat = chats.find((c) => c._id === chatId);
+      if (chat) {
+        dispatch(setActiveChat(chat));
+      } else {
+        dispatch(fetchChatById(chatId));
+      }
     }
     onClose();
   };

@@ -199,7 +199,15 @@ export default function Sidebar({ onChatSelect }) {
                       {lastMsg && (
                         <p className="text-xs text-slate-500 truncate mr-2 flex-1">
                           {lastMsg.sender?._id === user._id ? "You: " : ""}
-                          {lastMsg.isDeleted ? <em>Message deleted</em> : lastMsg.type === "text" ? lastMsg.content : `📎 ${lastMsg.type}`}
+                          {lastMsg.isDeleted ? (
+                            <em>Message deleted</em>
+                          ) : lastMsg.type === "text" ? (
+                            lastMsg.content
+                          ) : lastMsg.content && lastMsg.content !== lastMsg.fileName ? (
+                            `${lastMsg.type === "image" ? "📷" : "📎"} ${lastMsg.content}`
+                          ) : (
+                            `📎 ${lastMsg.type}`
+                          )}
                         </p>
                       )}
                       {unreadChatCount > 0 && (
