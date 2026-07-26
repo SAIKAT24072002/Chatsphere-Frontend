@@ -5,6 +5,7 @@ import { addMessage, removeMessage, setTyping, updateReaction, updateMessageRead
 import { updateUserStatus, updateLastMessage, addNewChat, updateChatInList, setOnlineUsers, fetchChatById } from "../redux/slices/chatSlice";
 import { updateUserStatus as updateOwnStatus } from "../redux/slices/authSlice";
 import { addNotification } from "../redux/slices/notificationSlice";
+import { setSidebarOpen } from "../redux/slices/uiSlice";
 import toast from "react-hot-toast";
 
 export const useSocket = () => {
@@ -34,6 +35,9 @@ export const useSocket = () => {
       if (event.data && event.data.type === "SELECT_CHAT") {
         const chatId = event.data.chatId;
         dispatch(fetchChatById(chatId));
+        if (window.innerWidth < 768) {
+          dispatch(setSidebarOpen(false));
+        }
       }
     };
     navigator.serviceWorker?.addEventListener("message", handleSWMessage);
@@ -106,6 +110,9 @@ export const useSocket = () => {
               e.preventDefault();
               window.focus();
               dispatch(fetchChatById(chatId));
+              if (window.innerWidth < 768) {
+                dispatch(setSidebarOpen(false));
+              }
             };
           }
         }

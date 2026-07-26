@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import { setSidebarOpen } from "../redux/slices/uiSlice";
 import { setActiveChat, fetchChatById } from "../redux/slices/chatSlice";
 import Sidebar from "../components/layout/Sidebar";
@@ -11,34 +12,25 @@ export default function ChatPage() {
   const { sidebarOpen } = useSelector((s) => s.ui);
   const { chats, activeChat } = useSelector((s) => s.chat);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [pendingChatId, setPendingChatId] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("chatId") || params.get("conversationId");
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const chatIdParam = searchParams.get("chatId") || searchParams.get("conversationId");
 
   useEffect(() => {
-    if (pendingChatId) {
-      // Remove query parameters from URL bar without reloading
-      const url = new URL(window.location);
-      if (url.searchParams.has("chatId") || url.searchParams.has("conversationId")) {
-        url.searchParams.delete("chatId");
-        url.searchParams.delete("conversationId");
-        window.history.replaceState(null, "", url.pathname + url.search);
-      }
-
-      const chat = chats.find((c) => c._id === pendingChatId);
+    if (chatIdParam) {
+      const chat = chats.find((c) => c._id === chatIdParam);
       if (chat) {
         dispatch(setActiveChat(chat));
-        setPendingChatId(null);
-      } else if (chats.length > 0) {
-        dispatch(fetchChatById(pendingChatId));
-        setPendingChatId(null);
       } else {
-        dispatch(fetchChatById(pendingChatId));
-        setPendingChatId(null);
+        dispatch(fetchChatById(chatIdParam));
       }
+      if (isMobile) {
+        dispatch(setSidebarOpen(false));
+      }
+      // Remove query parameters from URL bar without reloading
+      setSearchParams({}, { replace: true });
     }
-  }, [pendingChatId, chats, dispatch]);
+  }, [chatIdParam, chats, dispatch, setSearchParams, isMobile]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -54,8 +46,12 @@ export default function ChatPage() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (isMobile && !activeChat) {
-      dispatch(setSidebarOpen(true));
+    if (isMobile) {
+      if (!activeChat) {
+        dispatch(setSidebarOpen(true));
+      } else {
+        dispatch(setSidebarOpen(false));
+      }
     }
   }, [isMobile, activeChat, dispatch]);
 
