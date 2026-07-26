@@ -21,6 +21,13 @@ export default function AdminPage() {
   const [userPage, setUserPage] = useState(1);
   const [userTotal, setUserTotal] = useState(0);
 
+  const [allUsers, setAllUsers] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [createForm, setCreateForm] = useState({ name: "", description: "", members: [], admins: [] });
+  const [editForm, setEditForm] = useState({ name: "", description: "", members: [], admins: [] });
+
   useEffect(() => { fetchAnalytics(); }, []);
   useEffect(() => { if (tab === "users") fetchUsers(); }, [tab, userSearch, userPage]);
   useEffect(() => { if (tab === "groups") fetchGroups(); }, [tab]);
@@ -67,6 +74,57 @@ export default function AdminPage() {
   const dismissFlag = async (id) => {
     try { await api.patch(`/admin/flagged/${id}/dismiss`); setFlagged((prev) => prev.filter((m) => m._id !== id)); toast.success("Dismissed"); }
     catch { setFlagged((prev) => prev.filter((m) => m._id !== id)); }
+  };
+
+  const fetchAllUsersForSelection = async () => {
+    try {
+      const res = await api.get("/users");
+      setAllUsers(res.data);
+    } catch {
+      toast.error("Failed to load user selection list");
+    }
+  };
+  const openCreateModal = () => {
+    setCreateForm({ name: "", description: "", members: [], admins: [] });
+    fetchAllUsersForSelection();
+    setShowCreateModal(true);
+  };
+  const openEditModal = (group) => {
+    setEditingGroup(group);
+    setEditForm({
+      name: group.name || "",
+      description: group.description || "",
+      members: group.members?.map((m) => m._id || m) || [],
+      admins: group.admins?.map((a) => a._id || a) || [],
+    });
+    fetchAllUsersForSelection();
+    setShowEditModal(true);
+  };
+  const handleCreateGroup = async (e) => {
+    e.preventDefault();
+    if (!createForm.name) return toast.error("Group name is required");
+    if (createForm.members.length === 0) return toast.error("Select at least one member");
+    try {
+      const res = await api.post("/admin/groups", createForm);
+      setGroups((prev) => [res.data, ...prev]);
+      toast.success("Group created successfully");
+      setShowCreateModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to create group");
+    }
+  };
+  const handleEditGroup = async (e) => {
+    e.preventDefault();
+    if (!editForm.name) return toast.error("Group name is required");
+    if (editForm.members.length === 0) return toast.error("Select at least one member");
+    try {
+      const res = await api.put(`/admin/groups/${editingGroup._id}`, editForm);
+      setGroups((prev) => prev.map((g) => g._id === editingGroup._id ? res.data : g));
+      toast.success("Group updated successfully");
+      setShowEditModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update group");
+    }
   };
 
   const StatCard = ({ label, value, sub, icon, color }) => (
@@ -289,7 +347,16 @@ export default function AdminPage() {
         {/* ── GROUPS ── */}
         {tab === "groups" && (
           <div className="space-y-4 animate-fade-in">
-            <h2 className="text-sm sm:text-base font-semibold text-white">All Groups ({groups.length})</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-semibold text-white">All Groups ({groups.length})</h2>
+              <button onClick={openCreateModal}
+                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5 shadow-lg shadow-brand-600/20">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Group
+              </button>
+            </div>
             <div className="grid gap-3">
               {loading ? (
                 <div className="card p-10 text-center text-slate-500">Loading…</div>
@@ -314,6 +381,10 @@ export default function AdminPage() {
                         <div className="w-7 h-7 rounded-full bg-surface-700 flex items-center justify-center text-xs text-slate-400 ring-2 ring-surface-900">+{g.members.length - 3}</div>
                       )}
                     </div>
+                    <button onClick={() => openEditModal(g)}
+                      className="text-xs px-2.5 sm:px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 font-medium transition-colors">
+                      Edit
+                    </button>
                     <button onClick={() => deleteGroup(g._id)}
                       className="text-xs px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 font-medium transition-colors">
                       Delete
@@ -379,6 +450,150 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="card w-full max-w-lg max-h-[85vh] flex flex-col p-6 animate-scale-up">
+            <div className="flex items-center justify-between pb-4 border-b border-surface-800">
+              <h3 className="text-base sm:text-lg font-bold text-white">Create Group</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-white">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleCreateGroup} className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Group Name</label>
+                <input type="text" className="input-base" placeholder="Enter group name..." value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} required />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Description</label>
+                <textarea className="input-base min-h-[70px] resize-none" placeholder="Enter description (optional)..." value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} maxLength={300} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Select Members & Assign Admins</label>
+                <div className="space-y-2 border border-surface-800 rounded-xl p-3 bg-surface-950/50 max-h-[200px] overflow-y-auto divide-y divide-surface-800/40">
+                  {allUsers.length === 0 ? (
+                    <p className="text-xs text-slate-500 py-2 text-center">No other users available</p>
+                  ) : allUsers.map((u) => {
+                    const isSelected = createForm.members.includes(u._id);
+                    const isAdmin = createForm.admins.includes(u._id);
+                    return (
+                      <div key={u._id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                        <label className="flex items-center gap-2.5 cursor-pointer min-w-0">
+                          <input type="checkbox" checked={isSelected} className="checkbox-base"
+                            onChange={() => {
+                              const newMembers = isSelected
+                                ? createForm.members.filter((id) => id !== u._id)
+                                : [...createForm.members, u._id];
+                              const newAdmins = isSelected
+                                ? createForm.admins.filter((id) => id !== u._id)
+                                : createForm.admins;
+                              setCreateForm({ ...createForm, members: newMembers, admins: newAdmins });
+                            }} />
+                          <Avatar user={u} size="xs" />
+                          <span className="text-sm font-medium text-slate-300 truncate">{u.username}</span>
+                        </label>
+                        {isSelected && (
+                          <button type="button" onClick={() => {
+                            const newAdmins = isAdmin
+                              ? createForm.admins.filter((id) => id !== u._id)
+                              : [...createForm.admins, u._id];
+                            setCreateForm({ ...createForm, admins: newAdmins });
+                          }} className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-colors ${
+                            isAdmin ? "bg-brand-600/20 text-brand-400 border-brand-500/30" : "bg-transparent text-slate-500 border-surface-800 hover:text-slate-300"
+                          }`}>
+                            {isAdmin ? "Admin" : "Make Admin"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex gap-3 pt-3 border-t border-surface-800 justify-end">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="btn-ghost py-2 text-xs">Cancel</button>
+                <button type="submit" className="btn-primary py-2 text-xs">Create Group</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="card w-full max-w-lg max-h-[85vh] flex flex-col p-6 animate-scale-up">
+            <div className="flex items-center justify-between pb-4 border-b border-surface-800">
+              <h3 className="text-base sm:text-lg font-bold text-white">Edit Group: {editingGroup?.name}</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-white">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleEditGroup} className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Group Name</label>
+                <input type="text" className="input-base" placeholder="Enter group name..." value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Description</label>
+                <textarea className="input-base min-h-[70px] resize-none" placeholder="Enter description (optional)..." value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} maxLength={300} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Select Members & Assign Admins</label>
+                <div className="space-y-2 border border-surface-800 rounded-xl p-3 bg-surface-950/50 max-h-[200px] overflow-y-auto divide-y divide-surface-800/40">
+                  {allUsers.length === 0 ? (
+                    <p className="text-xs text-slate-500 py-2 text-center">No other users available</p>
+                  ) : allUsers.map((u) => {
+                    const isSelected = editForm.members.includes(u._id);
+                    const isAdmin = editForm.admins.includes(u._id);
+                    return (
+                      <div key={u._id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                        <label className="flex items-center gap-2.5 cursor-pointer min-w-0">
+                          <input type="checkbox" checked={isSelected} className="checkbox-base"
+                            onChange={() => {
+                              const newMembers = isSelected
+                                ? editForm.members.filter((id) => id !== u._id)
+                                : [...editForm.members, u._id];
+                              const newAdmins = isSelected
+                                ? editForm.admins.filter((id) => id !== u._id)
+                                : editForm.admins;
+                              setEditForm({ ...editForm, members: newMembers, admins: newAdmins });
+                            }} />
+                          <Avatar user={u} size="xs" />
+                          <span className="text-sm font-medium text-slate-300 truncate">{u.username}</span>
+                        </label>
+                        {isSelected && (
+                          <button type="button" onClick={() => {
+                            const newAdmins = isAdmin
+                              ? editForm.admins.filter((id) => id !== u._id)
+                              : [...editForm.admins, u._id];
+                            setEditForm({ ...editForm, admins: newAdmins });
+                          }} className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-colors ${
+                            isAdmin ? "bg-brand-600/20 text-brand-400 border-brand-500/30" : "bg-transparent text-slate-500 border-surface-800 hover:text-slate-300"
+                          }`}>
+                            {isAdmin ? "Admin" : "Make Admin"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex gap-3 pt-3 border-t border-surface-800 justify-end">
+                <button type="button" onClick={() => setShowEditModal(false)} className="btn-ghost py-2 text-xs">Cancel</button>
+                <button type="submit" className="btn-primary py-2 text-xs">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
