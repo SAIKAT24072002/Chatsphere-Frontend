@@ -139,7 +139,7 @@ export default function AdminPage() {
   );
 
   return (
-    <div className="min-h-screen h-full overflow-y-auto bg-surface-950">
+    <div className="h-screen h-[100dvh] w-full overflow-y-auto bg-surface-950">
       {/* Header */}
       <div className="bg-surface-900 border-b border-surface-800 px-4 sm:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -252,7 +252,7 @@ export default function AdminPage() {
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input className="input-base has-icon-left pl-10" placeholder="Search users…" value={userSearch}
+                <input className="input-base" style={{ paddingLeft: "2.75rem" }} placeholder="Search users…" value={userSearch}
                   onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }} />
               </div>
               <span className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">{userTotal} users</span>

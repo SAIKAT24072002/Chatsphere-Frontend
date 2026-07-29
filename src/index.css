@@ -47,28 +47,25 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-  /* allow body scroll on mobile when modals are open */
-  height: 100%;
-}
-
+html,
 body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: var(--color-surface-950);
   color: #f1f5f9;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  overflow-y: auto;
-  min-height: 100%;
+  overflow: hidden;
 }
 
-/* Make the root fill min-height on all devices */
 #root {
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
