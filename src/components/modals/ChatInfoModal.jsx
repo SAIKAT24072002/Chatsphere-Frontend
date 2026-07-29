@@ -142,12 +142,17 @@ export default function ChatInfoModal({ chat, onClose }) {
             {isAdmin && (
               <div className="pt-3 border-t border-surface-800 space-y-2">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Add Members</h4>
-                <input
-                  className="input-base text-sm"
-                  placeholder="Search users…"
-                  value={addSearch}
-                  onChange={(e) => searchUsers(e.target.value)}
-                />
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    className="input-base has-icon-left pl-10 text-sm"
+                    placeholder="Search users…"
+                    value={addSearch}
+                    onChange={(e) => searchUsers(e.target.value)}
+                  />
+                </div>
                 {foundUsers.map((u) => (
                   <button
                     key={u._id}

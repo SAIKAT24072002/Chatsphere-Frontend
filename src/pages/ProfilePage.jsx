@@ -58,7 +58,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-950">
+    <div className="min-h-screen h-full overflow-y-auto bg-surface-950">
       {/* Header */}
       <div className="bg-surface-900 border-b border-surface-800 px-4 sm:px-6 py-4 flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="btn-ghost p-2">
