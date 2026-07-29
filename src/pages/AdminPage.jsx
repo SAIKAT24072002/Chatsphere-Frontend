@@ -258,9 +258,9 @@ export default function AdminPage() {
               <span className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">{userTotal} users</span>
             </div>
 
-            <div className="card overflow-hidden">
+            <div className="card overflow-hidden flex flex-col">
               {/* Mobile: card list */}
-              <div className="sm:hidden divide-y divide-surface-800">
+              <div className="sm:hidden divide-y divide-surface-800 max-h-[60vh] overflow-y-auto">
                 {loading ? (
                   <div className="p-8 text-center text-slate-500 text-sm">Loading…</div>
                 ) : users.map((u) => (
@@ -285,16 +285,16 @@ export default function AdminPage() {
               </div>
 
               {/* Desktop: table */}
-              <div className="hidden sm:block overflow-x-auto">
+              <div className="hidden sm:block overflow-auto max-h-[60vh]">
                 <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-800 text-slate-400 text-xs uppercase tracking-wider">
-                      <th className="text-left px-5 py-3">User</th>
-                      <th className="text-left px-5 py-3">Email</th>
-                      <th className="text-left px-5 py-3">Status</th>
-                      <th className="text-left px-5 py-3">Role</th>
-                      <th className="text-left px-5 py-3">Joined</th>
-                      <th className="text-left px-5 py-3">Actions</th>
+                  <thead className="sticky top-0 bg-surface-900 z-10">
+                    <tr className="border-b border-surface-800 text-slate-400 text-xs uppercase tracking-wider bg-surface-900">
+                      <th className="text-left px-5 py-3 bg-surface-900">User</th>
+                      <th className="text-left px-5 py-3 bg-surface-900">Email</th>
+                      <th className="text-left px-5 py-3 bg-surface-900">Status</th>
+                      <th className="text-left px-5 py-3 bg-surface-900">Role</th>
+                      <th className="text-left px-5 py-3 bg-surface-900">Joined</th>
+                      <th className="text-left px-5 py-3 bg-surface-900">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
