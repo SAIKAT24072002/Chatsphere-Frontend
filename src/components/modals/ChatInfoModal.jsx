@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateGroup, removeGroupMember, addGroupMembers } from "../../redux/slices/chatSlice";
 import Avatar from "../ui/Avatar";
 import { getChatName, getChatAvatar, getInitials } from "../../utils/helpers";
-import api from "../../utils/api";
+import UserSearchSelect from "../ui/UserSearchSelect";
 import toast from "react-hot-toast";
 
 export default function ChatInfoModal({ chat, onClose }) {
@@ -12,23 +12,13 @@ export default function ChatInfoModal({ chat, onClose }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(chat?.name || "");
   const [desc, setDesc] = useState(chat?.description || "");
-  const [addSearch, setAddSearch] = useState("");
-  const [foundUsers, setFoundUsers] = useState([]);
+  const [selectedToAdd, setSelectedToAdd] = useState([]);
 
   if (!chat) return null;
 
   const isAdmin = chat.admins?.some((a) => (a._id || a) === user._id);
   const chatName = getChatName(chat, user);
   const chatAvatar = getChatAvatar(chat, user);
-
-  const searchUsers = async (q) => {
-    setAddSearch(q);
-    if (q.length < 2) { setFoundUsers([]); return; }
-    try {
-      const res = await api.get(`/users?search=${q}`);
-      setFoundUsers(res.data.filter((u) => !chat.members.some((m) => (m._id || m) === u._id)));
-    } catch {}
-  };
 
   const handleUpdate = async () => {
     const res = await dispatch(updateGroup({ id: chat._id, data: { name, description: desc } }));
@@ -43,10 +33,15 @@ export default function ChatInfoModal({ chat, onClose }) {
     else toast.success("Member removed");
   };
 
-  const handleAdd = async (u) => {
-    const res = await dispatch(addGroupMembers({ groupId: chat._id, memberIds: [u._id] }));
-    if (!res.error) { toast.success(`${u.username} added`); setAddSearch(""); setFoundUsers([]); }
-    else toast.error(res.payload);
+  const handleAddSelected = async () => {
+    if (selectedToAdd.length === 0) return;
+    const res = await dispatch(addGroupMembers({ groupId: chat._id, memberIds: selectedToAdd.map((u) => u._id) }));
+    if (!res.error) {
+      toast.success("Members added successfully");
+      setSelectedToAdd([]);
+    } else {
+      toast.error(res.payload);
+    }
   };
 
   return (
@@ -140,32 +135,23 @@ export default function ChatInfoModal({ chat, onClose }) {
 
             {/* Add members */}
             {isAdmin && (
-              <div className="pt-3 border-t border-surface-800 space-y-2">
+              <div className="pt-3 border-t border-surface-800 space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Add Members</h4>
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" fill="none" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                  </svg>
-                  <input
-                    className="input-base pl-10 text-sm"
-                    placeholder="Search users..."
-                    value={addSearch}
-                    onChange={(e) => searchUsers(e.target.value)}
-                  />
-                </div>
-                {foundUsers.map((u) => (
+                <UserSearchSelect
+                  selectedUsers={selectedToAdd}
+                  onChange={setSelectedToAdd}
+                  placeholder="Search users by username or email..."
+                  excludeIds={chat.members?.map((m) => m._id || m) || []}
+                />
+                {selectedToAdd.length > 0 && (
                   <button
-                    key={u._id}
-                    onClick={() => handleAdd(u)}
-                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-surface-800 transition-colors"
+                    type="button"
+                    onClick={handleAddSelected}
+                    className="btn-primary w-full py-2 text-xs"
                   >
-                    <Avatar user={u} size="sm" />
-                    <span className="flex-1 text-left text-sm text-slate-200">{u.username}</span>
-                    <svg className="w-4 h-4 text-brand-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
+                    Add {selectedToAdd.length} Member(s)
                   </button>
-                ))}
+                )}
               </div>
             )}
 

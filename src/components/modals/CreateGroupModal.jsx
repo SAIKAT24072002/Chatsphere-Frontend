@@ -1,34 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { createGroup } from "../../redux/slices/chatSlice";
-import api from "../../utils/api";
-import Avatar from "../ui/Avatar";
+import UserSearchSelect from "../ui/UserSearchSelect";
 import toast from "react-hot-toast";
 
 export default function CreateGroupModal({ onClose }) {
   const dispatch = useDispatch();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [search, setSearch] = useState("");
-  const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (search.length < 2) { setUsers([]); return; }
-    const t = setTimeout(async () => {
-      try { const res = await api.get(`/users?search=${search}`); setUsers(res.data); } catch {}
-    }, 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const toggle = (user) => {
-    setSelected((prev) =>
-      prev.find((u) => u._id === user._id)
-        ? prev.filter((u) => u._id !== user._id)
-        : [...prev, user]
-    );
-  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -42,7 +23,7 @@ export default function CreateGroupModal({ onClose }) {
   };
 
   return (
-    <div className="card w-full rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col">
+    <div className="card w-full rounded-t-2xl sm:rounded-2xl max-h-[90vh] flex flex-col animate-scale-up">
       {/* Header */}
       <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-4 border-b border-surface-800 flex-shrink-0">
         <h2 className="text-base sm:text-lg font-bold text-white">Create Group</h2>
@@ -70,57 +51,16 @@ export default function CreateGroupModal({ onClose }) {
             onChange={(e) => setDescription(e.target.value)}
           />
 
-          {/* Selected member chips */}
-          {selected.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {selected.map((u) => (
-                <span
-                  key={u._id}
-                  className="flex items-center gap-1.5 bg-brand-600/20 text-brand-300 text-xs px-2 py-1 rounded-full"
-                >
-                  {u.username}
-                  <button type="button" onClick={() => toggle(u)} className="hover:text-white leading-none">×</button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* User search */}
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" fill="none" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <input
-              className="input-base pl-10 text-sm"
-              placeholder="Search users to add..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Select Members
+            </label>
+            <UserSearchSelect
+              selectedUsers={selected}
+              onChange={setSelected}
+              placeholder="Search users by username or email..."
             />
           </div>
-
-          {users.length > 0 && (
-            <div className="max-h-40 sm:max-h-48 overflow-y-auto space-y-1 rounded-xl border border-surface-700">
-              {users.map((u) => {
-                const isSelected = selected.find((s) => s._id === u._id);
-                return (
-                  <button
-                    type="button"
-                    key={u._id}
-                    onClick={() => toggle(u)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 transition-colors ${isSelected ? "bg-brand-600/20" : "hover:bg-surface-800"}`}
-                  >
-                    <Avatar user={u} size="sm" />
-                    <span className="flex-1 text-left text-sm text-slate-200">{u.username}</span>
-                    {isSelected && (
-                      <svg className="w-4 h-4 text-brand-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
 
           <button type="submit" disabled={loading} className="btn-primary w-full py-3">
             {loading ? "Creating…" : `Create Group${selected.length > 0 ? ` (${selected.length + 1} members)` : ""}`}

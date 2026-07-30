@@ -14,10 +14,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+    if (status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login" + window.location.search;
+      }
+    } else if (status === 403) {
+      window.location.href = "/unauthorized" + window.location.search;
+    } else if (status >= 500) {
+      window.location.href = "/server-error" + window.location.search;
     }
     return Promise.reject(err);
   }

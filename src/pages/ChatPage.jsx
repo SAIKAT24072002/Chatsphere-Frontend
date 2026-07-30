@@ -71,7 +71,7 @@ export default function ChatPage() {
       </div>
 
       {/* Mobile backdrop */}
-      {sidebarOpen && isMobile && (
+      {sidebarOpen && isMobile && activeChat && (
         <div
           className="fixed inset-0 z-30 bg-black/60 md:hidden"
           onClick={() => dispatch(setSidebarOpen(false))}

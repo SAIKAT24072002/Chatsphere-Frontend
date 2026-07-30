@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from "recharts";
 import api from "../utils/api";
 import Avatar from "../components/ui/Avatar";
+import UserSearchSelect from "../components/ui/UserSearchSelect";
 import toast from "react-hot-toast";
 
 const TABS = ["overview", "users", "groups", "moderation", "reports"];
@@ -20,6 +21,9 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [userPage, setUserPage] = useState(1);
   const [userTotal, setUserTotal] = useState(0);
+  const [userRoleFilter, setUserRoleFilter] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState("");
+  const [confirmToggleUser, setConfirmToggleUser] = useState(null);
 
   const [reports, setReports] = useState(null);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -33,7 +37,7 @@ export default function AdminPage() {
   const [editForm, setEditForm] = useState({ name: "", description: "", members: [], admins: [] });
 
   useEffect(() => { fetchAnalytics(); }, []);
-  useEffect(() => { if (tab === "users") fetchUsers(); }, [tab, userSearch, userPage]);
+  useEffect(() => { if (tab === "users") fetchUsers(); }, [tab, userSearch, userPage, userRoleFilter, userStatusFilter]);
   useEffect(() => { if (tab === "groups") fetchGroups(); }, [tab]);
   useEffect(() => { if (tab === "moderation") fetchFlagged(); }, [tab]);
   useEffect(() => { if (tab === "reports") fetchReports(); }, [tab]);
@@ -56,7 +60,7 @@ export default function AdminPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/admin/users?search=${userSearch}&page=${userPage}`);
+      const res = await api.get(`/admin/users?search=${encodeURIComponent(userSearch)}&page=${userPage}&role=${userRoleFilter}&status=${userStatusFilter}`);
       setUsers(res.data.users); setUserTotal(res.data.total);
     } catch { toast.error("Failed to load users"); }
     setLoading(false);
@@ -257,104 +261,223 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {/* Recent Activity Card */}
+            <div className="card p-4 sm:p-5 mt-4">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="text-sm font-semibold text-white">Recent Activity Log</h4>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 font-bold uppercase tracking-wider">Audit logs</span>
+              </div>
+              <div className="space-y-3">
+                {!analytics.recentActivities || analytics.recentActivities.length === 0 ? (
+                  <p className="text-xs text-slate-500 text-center py-4">No recent administrative action logged.</p>
+                ) : (
+                  analytics.recentActivities.map((act) => (
+                    <div key={act._id} className="flex items-start justify-between gap-3 text-xs border-b border-surface-800/40 pb-2 last:border-0 last:pb-0">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-slate-350">@{act.admin?.username || "System"}</span>
+                          <span className="text-slate-500">{act.action}</span>
+                          {act.target && (
+                            <span className="px-1.5 py-0.5 rounded bg-surface-800/80 text-[10px] text-brand-450 font-mono truncate max-w-[120px]">{act.target}</span>
+                          )}
+                        </div>
+                        <p className="text-slate-400 mt-0.5">{act.details}</p>
+                      </div>
+                      <span className="text-[10px] text-slate-600 whitespace-nowrap self-center">
+                        {new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {/* ── USERS ── */}
         {tab === "users" && (
           <div className="space-y-4 animate-fade-in">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              {/* Search Bar */}
               <div className="relative flex-1">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" fill="none" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
-                <input className="input-base has-icon-left" placeholder="Search users..." value={userSearch}
+                <input className="input-base has-icon-left" placeholder="Search users by name/email..." value={userSearch}
                   onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }} />
               </div>
-              <span className="text-xs sm:text-sm text-slate-500 whitespace-nowrap">{userTotal} users</span>
+              
+              {/* Filter: Role */}
+              <select
+                className="input-base sm:w-40 text-xs"
+                value={userRoleFilter}
+                onChange={(e) => { setUserRoleFilter(e.target.value); setUserPage(1); }}
+              >
+                <option value="">All Roles</option>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              {/* Filter: Status */}
+              <select
+                className="input-base sm:w-40 text-xs"
+                value={userStatusFilter}
+                onChange={(e) => { setUserStatusFilter(e.target.value); setUserPage(1); }}
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="deactivated">Deactivated</option>
+              </select>
+
+              <span className="text-xs text-slate-500 whitespace-nowrap self-center">{userTotal} user(s) found</span>
             </div>
 
             <div className="card overflow-hidden flex flex-col">
-              {/* Mobile: card list */}
-              <div className="sm:hidden divide-y divide-surface-800 max-h-[60vh] overflow-y-auto">
-                {loading ? (
-                  <div className="p-8 text-center text-slate-500 text-sm">Loading…</div>
-                ) : users.map((u) => (
-                  <div key={u._id} className="p-4 flex items-center gap-3">
-                    <Avatar user={u} size="sm" showStatus />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-200 truncate">{u.username}</p>
-                      <p className="text-xs text-slate-500 truncate">{u.email}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${u.role === "admin" ? "bg-brand-600/20 text-brand-400" : "bg-surface-700 text-slate-400"}`}>{u.role}</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${u.status === "online" ? "bg-emerald-500/20 text-emerald-400" : "bg-surface-700 text-slate-400"}`}>{u.status}</span>
+              {loading ? (
+                /* Shimmer loading layout */
+                <div className="p-6 space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between gap-4 animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-surface-800 rounded-full" />
+                        <div className="space-y-1.5">
+                          <div className="h-3 w-28 bg-surface-800 rounded" />
+                          <div className="h-2.5 w-40 bg-surface-800 rounded" />
+                        </div>
+                      </div>
+                      <div className="h-6 w-16 bg-surface-800 rounded-lg" />
+                    </div>
+                  ))}
+                </div>
+              ) : users.length === 0 ? (
+                /* Better Empty State */
+                <div className="p-12 flex flex-col items-center gap-3 text-center text-slate-500">
+                  <svg className="w-12 h-12 opacity-30 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <p className="text-sm font-semibold text-slate-400">No users found matching your search</p>
+                  <p className="text-xs">Try resetting or modifying your query and filters.</p>
+                  {(userSearch || userRoleFilter || userStatusFilter) && (
+                    <button
+                      onClick={() => {
+                        setUserSearch("");
+                        setUserRoleFilter("");
+                        setUserStatusFilter("");
+                        setUserPage(1);
+                      }}
+                      className="mt-2 text-xs text-brand-400 hover:text-brand-300 underline font-medium"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Mobile: card list */}
+                  <div className="sm:hidden divide-y divide-surface-800 max-h-[60vh] overflow-y-auto">
+                    {users.map((u) => (
+                      <div key={u._id} className="p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar user={u} size="sm" showStatus />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-200 truncate">{u.username}</p>
+                            <p className="text-xs text-slate-550 truncate">{u.email}</p>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${u.role === "admin" ? "bg-brand-600/20 text-brand-400" : "bg-surface-700/60 text-slate-400"}`}>{u.role}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${u.status === "online" ? "bg-emerald-500/10 text-emerald-400" : "bg-surface-700/60 text-slate-400"}`}>{u.status}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setConfirmToggleUser(u)}
+                          className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors flex-shrink-0 ${
+                            u.isActive ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20" : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                          }`}
+                        >
+                          {u.isActive ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop: table */}
+                  <div className="hidden sm:block overflow-auto max-h-[60vh]">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-surface-900 z-10">
+                        <tr className="border-b border-surface-800 text-slate-400 text-xs uppercase tracking-wider bg-surface-900">
+                          <th className="text-left px-5 py-3.5 bg-surface-900 font-semibold">User</th>
+                          <th className="text-left px-5 py-3.5 bg-surface-900 font-semibold">Email</th>
+                          <th className="text-left px-5 py-3.5 bg-surface-900 font-semibold">Status</th>
+                          <th className="text-left px-5 py-3.5 bg-surface-900 font-semibold">Role</th>
+                          <th className="text-left px-5 py-3.5 bg-surface-900 font-semibold">Joined</th>
+                          <th className="text-left px-5 py-3.5 bg-surface-900 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {users.map((u) => (
+                          <tr key={u._id} className="border-b border-surface-800/50 hover:bg-surface-850/50 transition-colors">
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <Avatar user={u} size="sm" showStatus />
+                                <span className="font-semibold text-slate-200">{u.username}</span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3.5 text-slate-400">{u.email}</td>
+                            <td className="px-5 py-3.5">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${u.status === "online" ? "bg-emerald-500/25 text-emerald-400" : "bg-surface-700/60 text-slate-400"}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${u.status === "online" ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
+                                {u.status}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${u.role === "admin" ? "bg-brand-600/20 text-brand-400 border border-brand-500/20" : "bg-surface-700/60 text-slate-400"}`}>{u.role}</span>
+                            </td>
+                            <td className="px-5 py-3.5 text-slate-500 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                            <td className="px-5 py-3.5">
+                              <button
+                                onClick={() => setConfirmToggleUser(u)}
+                                className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors ${
+                                  u.isActive ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20" : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                                }`}
+                              >
+                                {u.isActive ? "Deactivate" : "Activate"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Enhanced Pagination UI */}
+                  {userTotal > 20 && (
+                    <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-t border-surface-800">
+                      <span className="text-xs text-slate-500">
+                        Showing <span className="font-semibold text-slate-350">{users.length}</span> of <span className="font-semibold text-slate-350">{userTotal}</span> users
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={userPage === 1}
+                          onClick={() => setUserPage((p) => p - 1)}
+                          className="btn-ghost text-xs px-3 py-1.5 border border-surface-800 disabled:opacity-30 disabled:pointer-events-none hover:bg-surface-800"
+                        >
+                          ← Prev
+                        </button>
+                        <span className="flex items-center justify-center text-xs px-3 font-semibold text-slate-300">
+                          {userPage} / {Math.ceil(userTotal / 20)}
+                        </span>
+                        <button
+                          disabled={userPage >= Math.ceil(userTotal / 20)}
+                          onClick={() => setUserPage((p) => p + 1)}
+                          className="btn-ghost text-xs px-3 py-1.5 border border-surface-800 disabled:opacity-30 disabled:pointer-events-none hover:bg-surface-800"
+                        >
+                          Next →
+                        </button>
                       </div>
                     </div>
-                    <button onClick={() => toggleUser(u._id)}
-                      className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors flex-shrink-0 ${
-                        u.isActive ? "bg-rose-500/10 text-rose-400" : "bg-emerald-500/10 text-emerald-400"
-                      }`}>
-                      {u.isActive ? "Deactivate" : "Activate"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Desktop: table */}
-              <div className="hidden sm:block overflow-auto max-h-[60vh]">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-surface-900 z-10">
-                    <tr className="border-b border-surface-800 text-slate-400 text-xs uppercase tracking-wider bg-surface-900">
-                      <th className="text-left px-5 py-3 bg-surface-900">User</th>
-                      <th className="text-left px-5 py-3 bg-surface-900">Email</th>
-                      <th className="text-left px-5 py-3 bg-surface-900">Status</th>
-                      <th className="text-left px-5 py-3 bg-surface-900">Role</th>
-                      <th className="text-left px-5 py-3 bg-surface-900">Joined</th>
-                      <th className="text-left px-5 py-3 bg-surface-900">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loading ? (
-                      <tr><td colSpan={6} className="text-center py-10 text-slate-500">Loading…</td></tr>
-                    ) : users.map((u) => (
-                      <tr key={u._id} className="border-b border-surface-800/50 hover:bg-surface-800/50 transition-colors">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar user={u} size="sm" showStatus />
-                            <span className="font-medium text-slate-200">{u.username}</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 text-slate-400">{u.email}</td>
-                        <td className="px-5 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${u.status === "online" ? "bg-emerald-500/20 text-emerald-400" : "bg-surface-700 text-slate-400"}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${u.status === "online" ? "bg-emerald-400" : "bg-slate-500"}`} />
-                            {u.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.role === "admin" ? "bg-brand-600/20 text-brand-400" : "bg-surface-700 text-slate-400"}`}>{u.role}</span>
-                        </td>
-                        <td className="px-5 py-3 text-slate-500 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
-                        <td className="px-5 py-3">
-                          <button onClick={() => toggleUser(u._id)}
-                            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${u.isActive ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20" : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"}`}>
-                            {u.isActive ? "Deactivate" : "Activate"}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {userTotal > 20 && (
-                <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-surface-800">
-                  <span className="text-xs text-slate-500">Page {userPage} of {Math.ceil(userTotal / 20)}</span>
-                  <div className="flex gap-2">
-                    <button disabled={userPage === 1} onClick={() => setUserPage((p) => p - 1)} className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-30">← Prev</button>
-                    <button disabled={userPage >= Math.ceil(userTotal / 20)} onClick={() => setUserPage((p) => p + 1)} className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-30">Next →</button>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -731,46 +854,45 @@ export default function AdminPage() {
                   onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} maxLength={300} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Select Members & Assign Admins</label>
-                <div className="space-y-2 border border-surface-800 rounded-xl p-3 bg-surface-950/50 max-h-[200px] overflow-y-auto divide-y divide-surface-800/40">
-                  {allUsers.length === 0 ? (
-                    <p className="text-xs text-slate-500 py-2 text-center">No other users available</p>
-                  ) : allUsers.map((u) => {
-                    const isSelected = createForm.members.includes(u._id);
-                    const isAdmin = createForm.admins.includes(u._id);
-                    return (
-                      <div key={u._id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
-                        <label className="flex items-center gap-2.5 cursor-pointer min-w-0">
-                          <input type="checkbox" checked={isSelected} className="checkbox-base"
-                            onChange={() => {
-                              const newMembers = isSelected
-                                ? createForm.members.filter((id) => id !== u._id)
-                                : [...createForm.members, u._id];
-                              const newAdmins = isSelected
-                                ? createForm.admins.filter((id) => id !== u._id)
-                                : createForm.admins;
-                              setCreateForm({ ...createForm, members: newMembers, admins: newAdmins });
-                            }} />
-                          <Avatar user={u} size="xs" />
-                          <span className="text-sm font-medium text-slate-300 truncate">{u.username}</span>
-                        </label>
-                        {isSelected && (
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Select Members</label>
+                <UserSearchSelect
+                  selectedUsers={allUsers.filter((u) => createForm.members.includes(u._id))}
+                  onChange={(users) => {
+                    const newIds = users.map((u) => u._id);
+                    const newAdmins = createForm.admins.filter((id) => newIds.includes(id));
+                    setCreateForm({ ...createForm, members: newIds, admins: newAdmins });
+                  }}
+                  placeholder="Search members by username or email..."
+                />
+              </div>
+              {createForm.members.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Assign Admins</label>
+                  <div className="space-y-2 border border-surface-800 rounded-xl p-3 bg-surface-950/50 max-h-[160px] overflow-y-auto divide-y divide-surface-800/40">
+                    {allUsers.filter((u) => createForm.members.includes(u._id)).map((u) => {
+                      const isAdmin = createForm.admins.includes(u._id);
+                      return (
+                        <div key={u._id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar user={u} size="xs" />
+                            <span className="text-sm font-medium text-slate-300 truncate">{u.username}</span>
+                          </div>
                           <button type="button" onClick={() => {
                             const newAdmins = isAdmin
                               ? createForm.admins.filter((id) => id !== u._id)
                               : [...createForm.admins, u._id];
                             setCreateForm({ ...createForm, admins: newAdmins });
-                          }} className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-colors ${
+                          }} className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border transition-colors ${
                             isAdmin ? "bg-brand-600/20 text-brand-400 border-brand-500/30" : "bg-transparent text-slate-500 border-surface-800 hover:text-slate-300"
                           }`}>
                             {isAdmin ? "Admin" : "Make Admin"}
                           </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex gap-3 pt-3 border-t border-surface-800 justify-end">
                 <button type="button" onClick={() => setShowCreateModal(false)} className="btn-ghost py-2 text-xs">Cancel</button>
                 <button type="submit" className="btn-primary py-2 text-xs">Create Group</button>
@@ -803,51 +925,80 @@ export default function AdminPage() {
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} maxLength={300} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Select Members & Assign Admins</label>
-                <div className="space-y-2 border border-surface-800 rounded-xl p-3 bg-surface-950/50 max-h-[200px] overflow-y-auto divide-y divide-surface-800/40">
-                  {allUsers.length === 0 ? (
-                    <p className="text-xs text-slate-500 py-2 text-center">No other users available</p>
-                  ) : allUsers.map((u) => {
-                    const isSelected = editForm.members.includes(u._id);
-                    const isAdmin = editForm.admins.includes(u._id);
-                    return (
-                      <div key={u._id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
-                        <label className="flex items-center gap-2.5 cursor-pointer min-w-0">
-                          <input type="checkbox" checked={isSelected} className="checkbox-base"
-                            onChange={() => {
-                              const newMembers = isSelected
-                                ? editForm.members.filter((id) => id !== u._id)
-                                : [...editForm.members, u._id];
-                              const newAdmins = isSelected
-                                ? editForm.admins.filter((id) => id !== u._id)
-                                : editForm.admins;
-                              setEditForm({ ...editForm, members: newMembers, admins: newAdmins });
-                            }} />
-                          <Avatar user={u} size="xs" />
-                          <span className="text-sm font-medium text-slate-300 truncate">{u.username}</span>
-                        </label>
-                        {isSelected && (
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Select Members</label>
+                <UserSearchSelect
+                  selectedUsers={allUsers.filter((u) => editForm.members.includes(u._id))}
+                  onChange={(users) => {
+                    const newIds = users.map((u) => u._id);
+                    const newAdmins = editForm.admins.filter((id) => newIds.includes(id));
+                    setEditForm({ ...editForm, members: newIds, admins: newAdmins });
+                  }}
+                  placeholder="Search members by username or email..."
+                />
+              </div>
+              {editForm.members.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Assign Admins</label>
+                  <div className="space-y-2 border border-surface-800 rounded-xl p-3 bg-surface-950/50 max-h-[160px] overflow-y-auto divide-y divide-surface-800/40">
+                    {allUsers.filter((u) => editForm.members.includes(u._id)).map((u) => {
+                      const isAdmin = editForm.admins.includes(u._id);
+                      return (
+                        <div key={u._id} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar user={u} size="xs" />
+                            <span className="text-sm font-medium text-slate-300 truncate">{u.username}</span>
+                          </div>
                           <button type="button" onClick={() => {
                             const newAdmins = isAdmin
                               ? editForm.admins.filter((id) => id !== u._id)
                               : [...editForm.admins, u._id];
                             setEditForm({ ...editForm, admins: newAdmins });
-                          }} className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border transition-colors ${
+                          }} className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border transition-colors ${
                             isAdmin ? "bg-brand-600/20 text-brand-400 border-brand-500/30" : "bg-transparent text-slate-500 border-surface-800 hover:text-slate-300"
                           }`}>
                             {isAdmin ? "Admin" : "Make Admin"}
                           </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex gap-3 pt-3 border-t border-surface-800 justify-end">
                 <button type="button" onClick={() => setShowEditModal(false)} className="btn-ghost py-2 text-xs">Cancel</button>
                 <button type="submit" className="btn-primary py-2 text-xs">Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmToggleUser && (
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="card w-full max-w-sm p-6 text-center animate-scale-up">
+            <div className="w-12 h-12 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center text-xl mx-auto mb-4">
+              ⚠️
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Confirm Action</h3>
+            <p className="text-slate-400 text-sm mb-6">
+              Are you sure you want to {confirmToggleUser.isActive ? "deactivate" : "activate"} user <span className="font-bold text-slate-200">@{confirmToggleUser.username}</span>?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => setConfirmToggleUser(null)} className="btn-ghost px-4 py-2 border border-surface-700 text-xs">
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  toggleUser(confirmToggleUser._id);
+                  setConfirmToggleUser(null);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-colors ${
+                  confirmToggleUser.isActive ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"
+                }`}
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}
