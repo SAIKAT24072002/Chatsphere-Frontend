@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend } from "recharts";
 import api from "../utils/api";
 import Avatar from "../components/ui/Avatar";
 import toast from "react-hot-toast";
 
-const TABS = ["overview", "users", "groups", "moderation"];
+const TABS = ["overview", "users", "groups", "moderation", "reports"];
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -21,6 +21,10 @@ export default function AdminPage() {
   const [userPage, setUserPage] = useState(1);
   const [userTotal, setUserTotal] = useState(0);
 
+  const [reports, setReports] = useState(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [timeframe, setTimeframe] = useState("7d");
+
   const [allUsers, setAllUsers] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -32,6 +36,18 @@ export default function AdminPage() {
   useEffect(() => { if (tab === "users") fetchUsers(); }, [tab, userSearch, userPage]);
   useEffect(() => { if (tab === "groups") fetchGroups(); }, [tab]);
   useEffect(() => { if (tab === "moderation") fetchFlagged(); }, [tab]);
+  useEffect(() => { if (tab === "reports") fetchReports(); }, [tab]);
+
+  const fetchReports = async () => {
+    setReportsLoading(true);
+    try {
+      const res = await api.get("/admin/reports");
+      setReports(res.data);
+    } catch {
+      toast.error("Failed to load reports");
+    }
+    setReportsLoading(false);
+  };
 
   const fetchAnalytics = async () => {
     try { const res = await api.get("/admin/analytics"); setAnalytics(res.data); }
@@ -446,6 +462,247 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {/* ── REPORTS ── */}
+        {tab === "reports" && (
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
+            {reportsLoading ? (
+              <div className="card p-12 text-center text-slate-500">
+                <span className="inline-block animate-pulse text-sm">Loading Reports & Analytics from Real Database...</span>
+              </div>
+            ) : !reports ? (
+              <div className="card p-12 text-center text-slate-500">
+                <p className="text-sm">No report data loaded.</p>
+              </div>
+            ) : (
+              <>
+                {/* Header with Timeframe selector */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-surface-900 p-4 rounded-xl border border-surface-800">
+                  <div>
+                    <h2 className="text-sm sm:text-base font-semibold text-white">Reports & Real-Time Analytics</h2>
+                    <p className="text-xs text-slate-500">Live platform metrics aggregated directly from MongoDB</p>
+                  </div>
+                  <div className="flex bg-surface-950 p-1 rounded-lg border border-surface-800 self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setTimeframe("7d")}
+                      className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        timeframe === "7d" ? "bg-brand-600 text-white shadow" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Last 7 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTimeframe("30d")}
+                      className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        timeframe === "30d" ? "bg-brand-600 text-white shadow" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Last 30 Days
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick stats grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <StatCard
+                    label="Total Users"
+                    value={reports.totalUsers}
+                    sub={`${reports.activeUsers} active / ${reports.onlineUsers} online`}
+                    icon="👥"
+                    color="bg-brand-600/20"
+                  />
+                  <StatCard
+                    label="Total Messages"
+                    value={reports.totalMessages}
+                    sub={`+${timeframe === "7d" ? reports.messages7d : reports.messages30d} this period`}
+                    icon="💬"
+                    color="bg-violet-600/20"
+                  />
+                  <StatCard
+                    label="Total Chats"
+                    value={reports.totalChats}
+                    sub={`${reports.totalGroups} groups / ${reports.totalDirect} direct`}
+                    icon="👨‍👩‍👧"
+                    color="bg-amber-600/20"
+                  />
+                  <StatCard
+                    label={timeframe === "7d" ? "New Users (7d)" : "New Users (30d)"}
+                    value={timeframe === "7d" ? reports.newUsers7d : reports.newUsers30d}
+                    sub="New registrations"
+                    icon="📈"
+                    color="bg-emerald-600/20"
+                  />
+                </div>
+
+                {/* Visualizations Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Messages Area Chart */}
+                  <div className="card p-4 sm:p-5">
+                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Message Activity</h3>
+                    <p className="text-xs text-slate-500 mb-4">Daily message volume sent during selected timeframe</p>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <AreaChart data={timeframe === "7d" ? reports.msgPerDay30?.slice(-7) : reports.msgPerDay30}>
+                        <defs>
+                          <linearGradient id="colorMsg" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="_id" tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                        <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} width={30} />
+                        <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#f1f5f9", fontSize: 12 }} />
+                        <Area type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorMsg)" name="Messages" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* User Registration trend */}
+                  <div className="card p-4 sm:p-5">
+                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">New Registrations</h3>
+                    <p className="text-xs text-slate-500 mb-4">Daily user registrations during selected timeframe</p>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={timeframe === "7d" ? reports.registrationsPerDay30?.slice(-7) : reports.registrationsPerDay30}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="_id" tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                        <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} width={30} />
+                        <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#f1f5f9", fontSize: 12 }} />
+                        <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} name="Users Joined" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Chat breakdown pie chart */}
+                  <div className="card p-4 sm:p-5 flex flex-col">
+                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Chat Composition</h3>
+                    <p className="text-xs text-slate-500 mb-4">Ratio of Group vs Direct chats</p>
+                    <div className="flex-1 flex items-center justify-center min-h-[160px]">
+                      {reports.totalChats > 0 ? (
+                        <ResponsiveContainer width="100%" height={160}>
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: "Group Chats", value: reports.totalGroups },
+                                { name: "Direct Chats", value: reports.totalDirect },
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={45}
+                              outerRadius={65}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              <Cell fill="#f59e0b" />
+                              <Cell fill="#8b5cf6" />
+                            </Pie>
+                            <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 8, color: "#f1f5f9", fontSize: 12 }} />
+                            <Legend verticalAlign="bottom" height={24} wrapperStyle={{ fontSize: 10, fill: "#94a3b8" }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <span className="text-xs text-slate-500">No chats available</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* System statistics card */}
+                  <div className="card p-4 sm:p-5 lg:col-span-2">
+                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Operational Efficiency & Platform Health</h3>
+                    <p className="text-xs text-slate-500 mb-4">Operational efficiency metrics calculated in real-time</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                      <div className="bg-surface-950/40 p-4 rounded-xl border border-surface-800/60">
+                        <span className="text-xs text-slate-400 block mb-1">Average Message Volume</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-white">{reports.avgMessagesPerUser}</span>
+                          <span className="text-xs text-slate-500">messages / user</span>
+                        </div>
+                      </div>
+                      <div className="bg-surface-950/40 p-4 rounded-xl border border-surface-800/60">
+                        <span className="text-xs text-slate-400 block mb-1">Chat Conversation Density</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-white">{reports.avgMessagesPerChat}</span>
+                          <span className="text-xs text-slate-500">messages / chat</span>
+                        </div>
+                      </div>
+                      <div className="bg-surface-950/40 p-4 rounded-xl border border-surface-800/60">
+                        <span className="text-xs text-slate-400 block mb-1">Online Users Ratio</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-emerald-400">
+                            {reports.totalUsers > 0 ? ((reports.onlineUsers / reports.totalUsers) * 100).toFixed(1) : 0}%
+                          </span>
+                          <span className="text-xs text-slate-500">currently online</span>
+                        </div>
+                      </div>
+                      <div className="bg-surface-950/40 p-4 rounded-xl border border-surface-800/60">
+                        <span className="text-xs text-slate-400 block mb-1">Account Retention Rate</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-brand-400">
+                            {reports.totalUsers > 0 ? ((reports.activeUsers / reports.totalUsers) * 100).toFixed(1) : 0}%
+                          </span>
+                          <span className="text-xs text-slate-500">active accounts</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Leaderboard Table */}
+                <div className="card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-surface-800 flex justify-between items-center bg-surface-900/20">
+                    <div>
+                      <h3 className="font-semibold text-white text-sm sm:text-base">Most Active Users</h3>
+                      <p className="text-xs text-slate-500">Top contributors ranked by total message volume</p>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-violet-500/10 text-violet-400 font-bold uppercase tracking-wider">Top Contributors</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-surface-800 text-slate-400 text-xs uppercase tracking-wider bg-surface-900/50">
+                          <th className="text-left px-5 py-3 font-semibold">Rank & User</th>
+                          <th className="text-left px-5 py-3 font-semibold">Email</th>
+                          <th className="text-right px-5 py-3 font-semibold">Total Messages Sent</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-surface-800/40">
+                        {reports.mostActiveUsers?.length === 0 ? (
+                          <tr>
+                            <td colSpan={3} className="text-center py-6 text-slate-500">No messaging history found.</td>
+                          </tr>
+                        ) : (
+                          reports.mostActiveUsers?.map((u, i) => (
+                            <tr key={u._id} className="hover:bg-surface-850/30 transition-colors">
+                              <td className="px-5 py-3.5">
+                                <div className="flex items-center gap-3">
+                                  <span className={`w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded-full ${
+                                    i === 0 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" :
+                                    i === 1 ? "bg-slate-400/20 text-slate-300 border border-slate-400/30" :
+                                    i === 2 ? "bg-amber-700/20 text-amber-600 border border-amber-700/30" :
+                                    "bg-surface-800 text-slate-500 border border-surface-700"
+                                  }`}>
+                                    {i + 1}
+                                  </span>
+                                  <Avatar user={u} size="xs" />
+                                  <span className="font-medium text-slate-200">{u.username}</span>
+                                </div>
+                              </td>
+                              <td className="px-5 py-3.5 text-slate-400">{u.email}</td>
+                              <td className="px-5 py-3.5 text-right font-semibold text-violet-400">{u.messageCount}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
