@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { updateProfile, uploadAvatar } from "../redux/slices/authSlice";
+import { updateProfile, uploadAvatar, logout } from "../redux/slices/authSlice";
 import Avatar from "../components/ui/Avatar";
 import api from "../utils/api";
 import toast from "react-hot-toast";
@@ -40,14 +40,27 @@ export default function ProfilePage() {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    if (pwForm.newPassword !== pwForm.confirmNew) return toast.error("Passwords don't match");
-    if (pwForm.newPassword.length < 6) return toast.error("New password too short");
+    if (pwForm.newPassword !== pwForm.confirmNew) {
+      return toast.error("New Password and Confirm Password do not match.");
+    }
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).{8,}$/;
+    if (!passwordRegex.test(pwForm.newPassword)) {
+      return toast.error("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
+    }
+    
+    if (pwForm.currentPassword === pwForm.newPassword) {
+      return toast.error("New password cannot be the same as the current password.");
+    }
+
     try {
       await api.put("/users/password", { currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
-      toast.success("Password changed");
+      toast.success("Password updated successfully.");
       setPwForm({ currentPassword: "", newPassword: "", confirmNew: "" });
+      dispatch(logout());
+      navigate("/login");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed");
+      toast.error(err.response?.data?.message || "Failed to update password.");
     }
   };
 
