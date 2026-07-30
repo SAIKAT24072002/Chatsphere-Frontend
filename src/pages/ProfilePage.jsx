@@ -15,6 +15,17 @@ export default function ProfilePage() {
   const { user } = useSelector((s) => s.auth);
   const [form, setForm] = useState({ username: user?.username || "", bio: user?.bio || "", customStatus: user?.customStatus || "" });
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmNew: "" });
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirmNew, setShowConfirmNew] = useState(false);
+  
+  const validations = {
+    length: pwForm.newPassword.length >= 6,
+    uppercase: /[A-Z]/.test(pwForm.newPassword),
+    lowercase: /[a-z]/.test(pwForm.newPassword),
+    number: /[0-9]/.test(pwForm.newPassword),
+  };
+  
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const fileRef = useRef();
@@ -41,14 +52,20 @@ export default function ProfilePage() {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (pwForm.newPassword !== pwForm.confirmNew) {
-      return toast.error("New Password and Confirm Password do not match.");
+      return toast.error("Passwords do not match.");
     }
-    
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_]).{8,}$/;
-    if (!passwordRegex.test(pwForm.newPassword)) {
-      return toast.error("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
+    if (pwForm.newPassword.length < 6) {
+      return toast.error("Password must be at least 6 characters long.");
     }
-    
+    if (!/[A-Z]/.test(pwForm.newPassword)) {
+      return toast.error("Password must contain at least one uppercase letter.");
+    }
+    if (!/[a-z]/.test(pwForm.newPassword)) {
+      return toast.error("Password must contain at least one lowercase letter.");
+    }
+    if (!/[0-9]/.test(pwForm.newPassword)) {
+      return toast.error("Password must contain at least one number.");
+    }
     if (pwForm.currentPassword === pwForm.newPassword) {
       return toast.error("New password cannot be the same as the current password.");
     }
@@ -57,6 +74,9 @@ export default function ProfilePage() {
       await api.put("/users/password", { currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
       toast.success("Password updated successfully.");
       setPwForm({ currentPassword: "", newPassword: "", confirmNew: "" });
+      setShowCurrent(false);
+      setShowNew(false);
+      setShowConfirmNew(false);
       dispatch(logout());
       navigate("/login");
     } catch (err) {
@@ -150,16 +170,114 @@ export default function ProfilePage() {
         ) : (
           <form onSubmit={handlePasswordChange} className="card p-4 sm:p-6 space-y-4">
             <h3 className="font-semibold text-white">Change Password</h3>
-            {["currentPassword", "newPassword", "confirmNew"].map((f) => (
-              <div key={f}>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5 capitalize">
-                  {f.replace(/([A-Z])/g, " $1").trim()}
-                </label>
-                <input type="password" className="input-base" value={pwForm[f]}
-                  onChange={(e) => setPwForm({ ...pwForm, [f]: e.target.value })} required />
+            
+            {/* Current Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Current Password</label>
+              <div className="relative">
+                <input
+                  type={showCurrent ? "text" : "password"}
+                  className="input-base pr-10"
+                  placeholder="Enter current password"
+                  value={pwForm.currentPassword}
+                  onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+                  required
+                />
+                <button type="button" onClick={() => setShowCurrent(!showCurrent)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  {showCurrent ? (
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L1 1m22 22L14.12 14.12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
               </div>
-            ))}
-            <button type="submit" className="btn-primary w-full py-2.5">Update Password</button>
+            </div>
+
+            {/* New Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">New Password</label>
+              <div className="relative">
+                <input
+                  type={showNew ? "text" : "password"}
+                  className="input-base pr-10"
+                  placeholder="Min. 6 characters"
+                  value={pwForm.newPassword}
+                  onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                  required
+                />
+                <button type="button" onClick={() => setShowNew(!showNew)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  {showNew ? (
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L1 1m22 22L14.12 14.12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {/* Password criteria indicator */}
+              {pwForm.newPassword && (
+                <div className="mt-2 p-3 bg-surface-950/60 rounded-xl border border-surface-800 text-xs space-y-1.5 animate-fade-in">
+                  <p className="font-semibold text-slate-400 mb-1">Password Requirements:</p>
+                  {[
+                    { label: "Minimum 6 characters", met: validations.length },
+                    { label: "At least one uppercase letter (A-Z)", met: validations.uppercase },
+                    { label: "At least one lowercase letter (a-z)", met: validations.lowercase },
+                    { label: "At least one number (0-9)", met: validations.number },
+                  ].map((req, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className={req.met ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>
+                        {req.met ? "✓" : "✗"}
+                      </span>
+                      <span className={req.met ? "text-slate-350" : "text-slate-500"}>
+                        {req.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Confirm New Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirm New Password</label>
+              <div className="relative">
+                <input
+                  type={showConfirmNew ? "text" : "password"}
+                  className="input-base pr-10"
+                  placeholder="Repeat new password"
+                  value={pwForm.confirmNew}
+                  onChange={(e) => setPwForm({ ...pwForm, confirmNew: e.target.value })}
+                  required
+                />
+                <button type="button" onClick={() => setShowConfirmNew(!showConfirmNew)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  {showConfirmNew ? (
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L1 1m22 22L14.12 14.12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="btn-primary w-full py-2.5 mt-2">Update Password</button>
           </form>
         )}
       </div>
