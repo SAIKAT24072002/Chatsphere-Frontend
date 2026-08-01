@@ -182,7 +182,11 @@ export default function ChatWindow({ onOpenSidebar }) {
                 ? `${activeChat.members?.length} members`
                 : otherUser?.status === "online"
                   ? <span className="text-emerald-400">Online</span>
-                  : `Last seen ${formatLastSeen(otherUser?.lastSeen)}`}
+                  : otherUser?.status === "away"
+                    ? <span className="text-amber-500">Away</span>
+                    : otherUser?.status === "busy"
+                      ? <span className="text-rose-500">Busy</span>
+                      : `Last seen ${formatLastSeen(otherUser?.lastSeen)}`}
             </p>
           </div>
         </div>

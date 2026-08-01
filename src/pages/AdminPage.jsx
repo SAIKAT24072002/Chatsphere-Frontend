@@ -385,7 +385,12 @@ export default function AdminPage() {
                             <p className="text-xs text-slate-550 truncate">{u.email}</p>
                             <div className="flex items-center gap-1.5 mt-1">
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${u.role === "admin" ? "bg-brand-600/20 text-brand-400" : "bg-surface-700/60 text-slate-400"}`}>{u.role}</span>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${u.status === "online" ? "bg-emerald-500/10 text-emerald-400" : "bg-surface-700/60 text-slate-400"}`}>{u.status}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                                u.status === "online" ? "bg-emerald-500/10 text-emerald-400" :
+                                u.status === "away" ? "bg-amber-500/10 text-amber-400" :
+                                u.status === "busy" ? "bg-rose-500/10 text-rose-400" :
+                                "bg-surface-700/60 text-slate-400"
+                              }`}>{u.status}</span>
                             </div>
                           </div>
                         </div>
@@ -425,8 +430,18 @@ export default function AdminPage() {
                             </td>
                             <td className="px-5 py-3.5 text-slate-400">{u.email}</td>
                             <td className="px-5 py-3.5">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${u.status === "online" ? "bg-emerald-500/25 text-emerald-400" : "bg-surface-700/60 text-slate-400"}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${u.status === "online" ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                u.status === "online" ? "bg-emerald-500/25 text-emerald-400" :
+                                u.status === "away" ? "bg-amber-500/25 text-amber-400" :
+                                u.status === "busy" ? "bg-rose-500/25 text-rose-400" :
+                                "bg-surface-700/60 text-slate-400"
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  u.status === "online" ? "bg-emerald-400 animate-pulse" :
+                                  u.status === "away" ? "bg-amber-400 animate-pulse" :
+                                  u.status === "busy" ? "bg-rose-400 animate-pulse" :
+                                  "bg-slate-500"
+                                }`} />
                                 {u.status}
                               </span>
                             </td>

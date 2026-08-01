@@ -179,7 +179,12 @@ export default function Sidebar({ onChatSelect }) {
                       </div>
                     )}
                     {otherUser && (
-                      <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-surface-900 ${otherUser.status === "online" ? "bg-emerald-500" : otherUser.status === "away" ? "bg-amber-500" : "bg-slate-600"}`} />
+                      <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-surface-900 ${
+                        otherUser.status === "online" ? "bg-emerald-500" :
+                        otherUser.status === "away" ? "bg-amber-500" :
+                        otherUser.status === "busy" ? "bg-rose-500" :
+                        "bg-slate-600"
+                      }`} />
                     )}
                     {chat.isGroup && (
                       <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-brand-600 rounded-full flex items-center justify-center">
